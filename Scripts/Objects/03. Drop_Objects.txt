@@ -1,0 +1,21 @@
+﻿IF OBJECT_ID(N'Configuration.usp_VersionControl_GetList') IS NOT NULL BEGIN DROP PROCEDURE Configuration.usp_VersionControl_GetList END
+IF OBJECT_ID(N'Configuration.usp_VersionControl_Merge')  IS NOT NULL BEGIN DROP PROCEDURE Configuration.usp_VersionControl_Merge END
+IF OBJECT_ID(N'Configuration.usp_EmailNotification') IS NOT NULL BEGIN DROP PROCEDURE Configuration.usp_EmailNotification END
+IF OBJECT_ID(N'Configuration.usp_ServerInstance_Insert')  IS NOT NULL BEGIN DROP PROCEDURE Configuration.usp_ServerInstance_Insert END
+IF OBJECT_ID(N'Configuration.usp_ServerInstance_LinkedServer_Configure')  IS NOT NULL BEGIN DROP PROCEDURE Configuration.usp_ServerInstance_LinkedServer_Configure END
+
+IF OBJECT_ID('Configuration.t_VersionControl') IS NOT NULL BEGIN DROP TABLE Configuration.t_VersionControl END
+if OBJECT_ID('Configuration.t_ServerInstance') IS NOT NULL begin drop table Configuration.t_ServerInstance end
+IF OBJECT_ID('Configuration.t_Databases') IS NOT NULL begin drop table Configuration.t_Databases end
+IF OBJECT_ID('Configuration.t_ServerInstance') IS NOT NULL begin drop table Configuration.t_ServerInstance end
+IF OBJECT_ID('Configuration.t_AlertEmail') IS NOT NULL BEGIN DROP TABLE Configuration.t_AlertEmail END
+
+IF OBJECT_ID('Collector.t_Backupset') IS NOT NULL BEGIN DROP TABLE Collector.t_Backupset END
+IF OBJECT_ID('Collector.t_BackupsetRestoreScripts') IS NOT NULL BEGIN DROP TABLE Collector.t_BackupsetRestoreScripts END
+IF OBJECT_ID('Collector.t_BackupsetOperation') IS NOT NULL BEGIN DROP TABLE Collector.t_BackupsetOperation END
+
+IF OBJECT_ID('Reporting.t_FailedSQLJobsHistory') IS NOT NULL BEGIN DROP TABLE Reporting.t_FailedSQLJobsHistory END
+
+IF TYPE_ID('Configuration.VersionControlList') IS NOT NULL BEGIN DROP TYPE Configuration.VersionControlList END
+
+IF EXISTS (SELECT * FROM sys.triggers WHERE parent_class = 0 AND name = 'Configuration_Schema_Based_Filegroup_Lock') BEGIN DROP TRIGGER Configuration_Schema_Based_Filegroup_Lock ON DATABASE END

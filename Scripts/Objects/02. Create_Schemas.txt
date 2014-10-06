@@ -1,0 +1,46 @@
+﻿USE [<Database_Name>]
+
+/********************* VARIABLES *******************************/
+	DECLARE @xml xml;
+	DECLARE @Schema varchar(256);
+	DECLARE @Authorization varchar(256);
+	DECLARE @SQL nvarchar(max)='';
+	DECLARE @Cur CURSOR;
+/***************************************************************/
+-- 1. Get XML information
+SELECT @Xml = CAST(BulkColumn AS XML)
+FROM OPENROWSET (BULK '<Configuration_File>', SINGLE_BLOB) AS DATA;
+
+-- 2. Declare Cursor for Schemas
+SET @Cur = CURSOR FOR 
+SELECT t.c.value('@Name','NVARCHAR(256)') , 
+		t.c.value('@Authorization','NVARCHAR(256)')
+FROM @xml.nodes('/Root/DMCConfiguration/DMCDatabaseSchemas/Schemas/Schema') AS T(c)
+
+-- 3. Open Cursor
+OPEN @Cur
+		
+-- 4. Fetch
+FETCH NEXT FROM @Cur INTO @Schema, @Authorization
+
+-- 5. Start loop
+WHILE @@FETCH_STATUS = 0
+	BEGIN			
+		-- first remove schema from database if exists		
+		IF SCHEMA_ID(@schema) IS NOT NULL
+		BEGIN
+			PRINT 'Dropping Schema: ' + @schema;
+			EXEC ('DROP SCHEMA [' + @schema + ']')
+		END;
+
+		-- then creating schema
+		PRINT 'Creating Schema: ' + @schema
+		EXEC ('CREATE SCHEMA ' + @schema +' AUTHORIZATION ' + @Authorization)
+			
+		FETCH NEXT FROM @Cur INTO @Schema, @Authorization
+	END
+
+-- 6. Cleanup
+CLOSE @Cur;
+DEALLOCATE @Cur;
+	

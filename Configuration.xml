@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <InstancesConfiguration>
+    <PrimaryInstance Server="JSAMUEL12-ASUS" Instance="LAB" Backuplocation="F:\SQLServer\LAB\Backup\" Username="" Password="" />
+    <SecondaryInstances>
+      <Instances>
+        <Database Server="JSAMUEL12-ASUS" Instance="REPORTS" Backuplocation="F:\SQLServer\REPORTS\Backup\" />
+        <Database Server="JSAMUEL12-ASUS" Instance="REPLICATE" Backuplocation="F:\SQLServer\REPLICATE\Backup\" />
+      </Instances>
+    </SecondaryInstances>
+  </InstancesConfiguration>
+  <DMCConfiguration>
+    <DMCDatabaseFolders>
+      <Folder>
+        <file Name="Primary_Data" Location="F:\SQLServer\LAB\Data" />
+        <file Name="Secondary_Configuration_Data" Location="F:\SQLServer\LAB\Data" />
+        <file Name="Primary_Log" Location="F:\SQLServer\LAB\Tlog" />
+        <file Name="TempDB_Data" Location="F:\SQLServer\LAB\Temp" />
+        <file Name="TempDB_Log" Location="F:\SQLServer\LAB\Temp"  />
+      </Folder>
+    </DMCDatabaseFolders>
+    <DMCDatabaseProperties>
+      <Properties>
+        <Property Name="LogFileGrowthMB" value="5" />
+        <Property Name="LogSizeMB" value="80" />
+        <Property Name="LogTotalLogSizeMB" value="320" />
+        <Property Name="LogLogMaxFileSizeMB" value="1024" />
+        <Property Name="RecoveryModel" value="Full" />
+      </Properties>
+    </DMCDatabaseProperties>
+    <DMCDatabaseUsers>
+      <Users>
+        <User Name="DMTAdmin" Password="pa$$w0rd1" ServerRole="sysadmin" DatabaseRole="db_owner" />
+        <User Name="DMTReportsUser" Password="pa$$w0rd1" ServerRole="public" DatabaseRole="" />
+      </Users>
+    </DMCDatabaseUsers>
+    <DMCDatabaseSchemas>
+      <Schemas>
+        <Schema Name="Reporting" Authorization="DMTAdmin" />
+        <Schema Name="Collector" Authorization="DMTAdmin" />
+        <Schema Name="Configuration" Authorization="DMTAdmin" />
+      </Schemas>
+    </DMCDatabaseSchemas>
+  </DMCConfiguration>
+  <ServerConfiguration>
+    <ServerOptions>
+      <Options>
+        <Option Name="database mail xps" value="1" />
+        <Option Name="ole automation procedures" value="1" />
+        <Option Name="xp_cmdshell" value="1" />
+        <Option Name="clr enabled" value="1" />
+        <Option Name="recovery interval (min)" value="1" />
+        <Option Name="network packet size (B)" value="4096" />
+        <Option Name="backup compression default" value="1" />
+        <Option Name="ad hoc distributed queries" value="1" />
+      </Options>
+    </ServerOptions>
+    <ServerProperties>
+      <Properties>
+        <Property Name="TCPPort" value="1433" />
+        <Property Name="NumErrorLogs" value="20" />
+      </Properties>
+    </ServerProperties>
+  </ServerConfiguration>
+  <MiscConfiguration>
+    <DatabaseMail>
+      <Settings>
+        <MailConfig Name="profile_Name" Value="DBA mail profile" />
+        <MailConfig Name="account_name" Value="DBA mail account" />
+        <MailConfig Name="email_address" Value="databasemanagementconsole@gmail.com" />
+        <MailConfig Name="description" Value="Mail account used DBA e-mail." />
+        <MailConfig Name="replyto_address" Value="databasemanagementconsole@gmail.com" />
+        <MailConfig Name="display_name" Value="Database Management" />
+        <MailConfig Name="mailserver_name" Value="smtp.gmail.com" />
+        <MailConfig Name="port" Value="587" />
+        <MailConfig Name="username" Value="databasemanagementconsole@gmail.com" />
+        <MailConfig Name="password" Value="pa$$w0rd1" />
+        <MailConfig Name="enable_ssl" Value="1" />
+      </Settings>
+    </DatabaseMail>
+    <DBAdminEmails>
+      <Email User="Justin Samuel" Address="jsamuel12@gmail.com" />
+      <Email User="Justin Samuel" Address="justin_samuel@4-dsecurity.com" />
+    </DBAdminEmails>
+  </MiscConfiguration>
+</Root>

@@ -1,0 +1,14 @@
+--declare @stopcmd varchar(500) ='net start "SQL Server Agent (reports)"';
+--exec xp_cmdshell @stopcmd;
+
+
+
+declare @credential varchar(256)='SQLAdmin_Credential'
+declare @credentialUser varchar(256)='4dsecurity\justin_samuel'
+declare @credentialPassword varchar(256)='@Capricorn16'
+
+if not exists ( select top 1 * from sys.credentials where name = @credential )
+	Begin
+		exec ('drop credential ' + @credential);
+		exec ('create credential ' + @credential + ' WITH Identity = ''' + @credentialUser +''' , secret ='''+ @credentialPassword +'''')
+	end;

@@ -1,0 +1,114 @@
+﻿USE [<Database_Name>]
+-- 1. Version Control	
+	CREATE TABLE Configuration.t_VersionControl(
+		VersionControlId INT NOT NULL IDENTITY (1000,1),
+		VersionNumber numeric(3,1) NOT NULL,
+		ScriptName VARCHAR(256) NOT NULL,
+		Author VARCHAR(256) NOT NULL,
+		ObjectName VARCHAR(256) NOT NULL,
+		Description NVARCHAR(MAX) NOT NULL,
+		[Option] VARCHAR(256) NOT NULL DEFAULT('New'),
+		isError BIT NOT NULL DEFAULT(0),
+		ErrorMessage NVARCHAR(MAX) NULL,
+		ReleaseDate date default(DATEADD(DAY, 0, DATEDIFF(DAY, 0, GETDATE()))) not NULL,
+		InstalledDatetime datetime2 default(getdate()) NOT NULL,
+		UpdatedDatetime datetime2 default(getdate()) NOT NULL,
+		CONSTRAINT pk_t_VersionControl PRIMARY KEY CLUSTERED 
+		( VersionControlId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [Configure] 
+		) ON [Configure] 
+		
+	CREATE INDEX ix_Folder_ScriptName ON Configuration.t_VersionControl (ScriptName) on [Configure] 
+		
+-- 2. server instances
+	CREATE TABLE Configuration.t_ServerInstance(
+		ServerInstanceId uniqueidentifier not null default(newid()),
+		ServerName sysname not null,
+		InstanceName sysname not null,
+		BackupLocation varchar(1000) null,
+		PrimaryConsoleServer bit not null default(0),
+		isMonitored bit not null default(1),
+		DMTDBInstalledDatetime datetime2 not null default('12/31/2999'),
+		CreateDate date not null default(getdate()),
+		CONSTRAINT pk_t_ServerInstance PRIMARY KEY CLUSTERED 
+		( ServerName ASC, InstanceName ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [Configure]  
+		) ON [Configure] 
+
+	CREATE INDEX ix_ServerInstance_ServerInstanceId ON Configuration.t_ServerInstance (ServerInstanceId) on [Configure] 
+
+-- 3. Create VersionControl User defined table	
+	CREATE TYPE Configuration.VersionControlList AS TABLE (
+		VersionControlListId INT NOT NULL Primary Key,
+		ScriptName varchar(256) not null,
+		FullFileName varchar(4000) not null				
+		) 
+
+-- 4. Create backupset table	
+	CREATE TABLE Collector.t_Backupset (
+		BackupSetId INT  IDENTITY (1,1)  NOT NULL,
+		Name nvarchar(128) NULL,
+		FirstLsn numeric(25, 0) NULL,
+		LastLsn numeric(25, 0) NULL,
+		BackupStartDate datetime NULL,
+		BackupFinishDate datetime NULL,
+		SizeInKB INT NOT NULL,
+		Type nvarchar(50) NULL,
+		[Database] nvarchar(128) NULL,
+		[FileName] nvarchar(256) NULL,
+		RecoveryModel nvarchar(60) NULL,
+		IsDamaged bit default(0) NOT NULL,
+		RestorationScripts nvarchar(1000) NULL,
+		MachineNameWhereFileResides nvarchar(128) NULL,
+		CreateDatetime datetime2 default(getdate()) not null,
+		CONSTRAINT pk_t_Backupset PRIMARY KEY CLUSTERED 
+			( BackupSetId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+		) ON [PRIMARY]
+
+-- 5. Create backupset Operation table
+	CREATE TABLE Collector.t_BackupsetOperation (
+		BackupsetOperationId int IDENTITY(1,1) NOT NULL,
+		[Database] nvarchar(128) NULL,
+		OperationType nvarchar(50) NOT NULL,
+		OperationStatus nvarchar(30) NOT NULL,
+		Comments nvarchar(4000) NULL,
+		CreateDatetime datetime2(7) NOT NULL DEFAULT(getdate()),
+		CONSTRAINT pk_t_BackupsetOperation PRIMARY KEY CLUSTERED 
+		( BackupsetOperationId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+		) ON [PRIMARY]
+
+-- 6. Create backupset restore script table
+	CREATE TABLE Collector.t_BackupsetRestoreScripts (
+		BackupsetRestoreScriptsId INT  IDENTITY (1,1) NOT NULL,
+		[Database] nvarchar(128) NULL,
+		[FileName] nvarchar(256) NULL,
+		CreateDatetime datetime2 default(getdate()) not null,	
+		CONSTRAINT pk_t_BackupsetRestoreScripts PRIMARY KEY CLUSTERED 
+		( BackupsetRestoreScriptsId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+		) ON [PRIMARY]
+
+-- 7. Create SQL Server job history
+	CREATE TABLE Reporting.t_FailedSQLJobsHistory(
+		Instanceid int NOT NULL,
+		JobId uniqueidentifier NOT NULL,
+		JobName sysname NOT NULL,
+		StepName sysname NOT NULL,
+		RunStatus varchar(11) NULL,
+		SqlMessageId int NOT NULL,
+		SqlSeverity int NOT NULL,
+		Message nvarchar(4000) NULL,
+		ExecutionDatetime datetime2(7) NULL,
+		RunDuration int NOT NULL,
+		Server sysname NOT NULL,
+		CreateDatetime datetime2 not null default(getdate())
+	) ON [PRIMARY]
+
+	Create index ix_FailedSQLJobsHistory_InstanceId ON Reporting.t_FailedSQLJobsHistory(InstanceId) ON [PRIMARY]
+	Create index ix_FailedSQLJobsHistory_JobName_ExecutionDatetime ON Reporting.t_FailedSQLJobsHistory(JobName,ExecutionDatetime) ON [PRIMARY]
+
+-- 8. Create alert email table
+	CREATE TABLE Configuration.t_AlertEmail(
+		AlertEmailId INT Primary Key Identity(1,1) NOT NULL,
+		Name varchar(500) NOT NULL,
+		EmailAddress varchar(500) NOT NULL,
+		isActive bit NOT NULL DEFAULT(1)
+	) ON [Configure]
+

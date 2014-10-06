@@ -1,0 +1,58 @@
+﻿-- =============================================
+-- Author: Justin Samuel
+-- Create date: 11-9-2013
+-- Description:	Insert into Configuration.t_VersionControl
+-- =============================================
+CREATE PROCEDURE Configuration.usp_VersionControl_Merge
+	
+	@VersionNumber numeric(3,1),
+	@ScriptName varchar(256),
+	@Author varchar(256),
+	@ObjectName varchar(256),
+	@Option varchar(256),
+	@Description nvarchar(max),
+	@ReleaseDate date,
+	@isError bit,
+	@ErrorMsg nvarchar(max)
+
+AS
+BEGIN TRY;
+	SET NOCOUNT ON;
+	/********************* VARIABLES *******************************/
+		DECLARE @DtNow Datetime2 = getdate();
+
+		IF ( @VersionNumber IS NULL ) BEGIN SET @VersionNumber = '1.0' END;
+		IF ( LEN(@ErrorMsg) = 0) BEGIN SET @ErrorMsg = NULL END;
+		SET @ErrorMsg = REPLACE(@ErrorMsg,'|',' '); 
+	/*******************************************************************/
+		MERGE Configuration.t_VersionControl as Target
+		USING ( SELECT @VersionNumber, @ScriptName, @Author, @ObjectName, @Description, @Option, @ReleaseDate, @isError, @ErrorMsg, @DtNow ) as Source 
+				( VersionNumber, ScriptName, Author, ObjectName, [Description], [Option], [ReleaseDate], isError, ErrorMessage, [DateTime] ) 
+		ON [Target].Scriptname = Source.Scriptname
+		WHEN MATCHED THEN
+			UPDATE SET VersionNumber = Source.VersionNumber, 
+						ScriptName = Source.ScriptName, 
+						Author = Source.Author, 
+						ObjectName = Source.ObjectName, 
+						[Description] = Source.[Description], 
+						[Option] = Source.[Option],
+						isError = Source.isError, 
+						ErrorMessage = Source.ErrorMessage, 
+						ReleaseDate = Source.[ReleaseDate],
+						UpdatedDatetime = Source.[DateTime]
+		WHEN NOT MATCHED THEN
+			INSERT ( VersionNumber, ScriptName, Author, ObjectName, [Description], [Option], isError, ErrorMessage, ReleaseDate, InstalledDatetime )
+			VALUES ( Source.VersionNumber,Source.ScriptName, Source.Author, Source.ObjectName, Source.[Description], Source.[Option], Source.isError, Source.ErrorMessage, Source.[ReleaseDate], Source.[DateTime] );
+				
+END TRY
+BEGIN CATCH
+	-- 1. Raise Error
+		DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +'.' + QUOTENAME(object_name(@@PROCID))
+		DECLARE @ErrorMessageFormat	VARCHAR(8000)	= 'There was an error when executing the stored procedure: %s' + char(13) + 'Please see below for information' + char(13) + char(13) +
+														'Error Message: %s' + char(13) + 
+														'Error Severity: %i' + char(13) + 
+														'Error State: %i' + char(13) + 
+														'Error Number: %i';
+		DECLARE @ErrorMessage		VARCHAR(MAX)	= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
+		RAISERROR (@ErrorMessage,16,1);		
+END CATCH;

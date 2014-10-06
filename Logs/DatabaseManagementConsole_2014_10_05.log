@@ -1,0 +1,98 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+:: Log File for DatabaseManagementConsole
+:: Date Creation: Sunday, October 5, 2014
+:: Powershell Version: 4.0
+:: Executed by: JSAMUEL12-ASUS\Justin
+:: Executed Machine: JSAMUEL12-ASUS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Level			Date			Event
+-------------------	-------------------	---------------------------------------------------------------------------------------------------------
+Info :			2014-10-05T22:48:42	Scripts directory location: C:\Users\Justin\Desktop\DatabaseManagementConsole\Scripts
+Info :			2014-10-05T22:48:42	User selection: create
+Info :			2014-10-05T22:48:42	create on Instance: JSAMUEL12-ASUS\LAB
+Info :			2014-10-05T22:48:42	create for Database: DatabaseManagementConsole
+Info :			2014-10-05T22:48:42	--- Folder Information ----
+							1) Primary_Data = F:\SQLServer\LAB\Data
+							2) Secondary_Configuration_Data = F:\SQLServer\LAB\Data
+							3) Primary_Log = F:\SQLServer\LAB\Tlog
+							4) TempDB_Data = F:\SQLServer\LAB\Temp
+							5) TempDB_Log = F:\SQLServer\LAB\Temp
+Info :			2014-10-05T22:48:42	--- Database Configuration ----
+							1) LogFileGrowthMB = 5
+							2) LogSizeMB = 80
+							3) LogTotalLogSizeMB = 320
+							4) LogLogMaxFileSizeMB = 1024
+							5) RecoveryModel = Full
+Info :			2014-10-05T22:48:42	---- Server Configuration ----
+							Will be executing all the contents in the Server Configuration node
+Info :			2014-10-05T22:48:42	01. Server_Configuration.sql -- starting!
+Info :			2014-10-05T22:48:43	01. Server_Configuration.sql -- completed successful!
+Info :			2014-10-05T22:48:43	02. Create_SQL_profile_mail.sql -- starting!
+Info :			2014-10-05T22:48:43	02. Create_SQL_profile_mail.sql -- completed successful!
+Info :			2014-10-05T22:48:43	03. Create_Database.sql -- starting!
+Info :			2014-10-05T22:48:50	03. Create_Database.sql -- completed successful!
+Info :			2014-10-05T22:48:50	04. Create_Database_Objects.sql -- starting!
+Info :			2014-10-05T22:48:50	04. Create_Database_Objects.sql -- completed successful!
+Info :			2014-10-05T22:48:50	05. Create_Configuration.svfn_DefaultFolderLocation_Get.sql -- starting!
+Info :			2014-10-05T22:48:50	05. Create_Configuration.svfn_DefaultFolderLocation_Get.sql -- completed successful!
+Info :			2014-10-05T22:48:50	06. Create_Configuration.usp_DefaultFolderLocation_Reconfigure.sql -- starting!
+Info :			2014-10-05T22:48:50	06. Create_Configuration.usp_DefaultFolderLocation_Reconfigure.sql -- completed successful!
+Info :			2014-10-05T22:48:50	07. Create_Collector.usp_Backupset_Insert.sql -- starting!
+Info :			2014-10-05T22:48:50	07. Create_Collector.usp_Backupset_Insert.sql -- completed successful!
+Info :			2014-10-05T22:48:50	08. Create_Collector.usp_BackupsetOperation_Insert.sql -- starting!
+Info :			2014-10-05T22:48:50	08. Create_Collector.usp_BackupsetOperation_Insert.sql -- completed successful!
+Info :			2014-10-05T22:48:50	09. Create_Collector.usp_Maintenance_Backups.sql -- starting!
+Info :			2014-10-05T22:48:50	09. Create_Collector.usp_Maintenance_Backups.sql -- completed successful!
+Info :			2014-10-05T22:48:50	10. Create_Collector.usp_Maintenance_Backups_CreateRestoreScripts.sql -- starting!
+Info :			2014-10-05T22:48:50	10. Create_Collector.usp_Maintenance_Backups_CreateRestoreScripts.sql -- completed successful!
+Info :			2014-10-05T22:48:50	11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql -- starting!
+Warn :			2014-10-05T22:48:50	System.Exception: There was an error when executing the step: 11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql
+						Error Message: Incorrect syntax near 'MS'.
+						Error Severity: 15
+						Error State: 1
+						Error Number: 102
+
+**********************************************************************************************************************************
+Info :			2014-10-05T22:51:01	Scripts directory location: C:\Users\Justin\Desktop\DatabaseManagementConsole\Scripts
+Info :			2014-10-05T22:51:01	User selection: Update
+Info :			2014-10-05T22:51:01	Update on Instance: JSAMUEL12-ASUS\LAB
+Info :			2014-10-05T22:51:01	Update for Database: DatabaseManagementConsole
+Info :			2014-10-05T22:51:02	11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql -- starting!
+Warn :			2014-10-05T22:51:02	System.Exception: There was an error when executing the step: 11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql
+						Error Message: Incorrect syntax near ';'.
+						Error Severity: 15
+						Error State: 1
+						Error Number: 102
+
+**********************************************************************************************************************************
+Info :			2014-10-05T22:54:22	Scripts directory location: C:\Users\Justin\Desktop\DatabaseManagementConsole\Scripts
+Info :			2014-10-05T22:54:22	User selection: Update
+Info :			2014-10-05T22:54:22	Update on Instance: JSAMUEL12-ASUS\LAB
+Info :			2014-10-05T22:54:22	Update for Database: DatabaseManagementConsole
+Info :			2014-10-05T22:54:23	11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql -- starting!
+Info :			2014-10-05T22:54:23	11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql -- completed successful!
+Info :			2014-10-05T22:54:23	12. Create_Collector.Maintenance_Backups_job.sql -- starting!
+Info :			2014-10-05T22:54:23	12. Create_Collector.Maintenance_Backups_job.sql -- completed successful!
+Info :			2014-10-05T22:54:23	13. Create_Collector.Maintenance_Backups_DeleteFolderContents_job.sql -- starting!
+Info :			2014-10-05T22:54:23	13. Create_Collector.Maintenance_Backups_DeleteFolderContents_job.sql -- completed successful!
+Info :			2014-10-05T22:54:23	14. Create_Collector.v_FailedSQLJobs.sql -- starting!
+Info :			2014-10-05T22:54:23	14. Create_Collector.v_FailedSQLJobs.sql -- completed successful!
+Info :			2014-10-05T22:54:23	15. Create_Configuration.usp_AlertEmail_Get.sql -- starting!
+Info :			2014-10-05T22:54:23	15. Create_Configuration.usp_AlertEmail_Get.sql -- completed successful!
+Info :			2014-10-05T22:54:23	16. Create_Reporting.usp_FailedSQLJobsHistory_Insert.sql -- starting!
+Info :			2014-10-05T22:54:23	16. Create_Reporting.usp_FailedSQLJobsHistory_Insert.sql -- completed successful!
+Info :			2014-10-05T22:54:23	17. Create_Reporting.FailedSQLJobs_job.sql -- starting!
+Info :			2014-10-05T22:54:23	17. Create_Reporting.FailedSQLJobs_job.sql -- completed successful!
+Info :			2014-10-05T22:54:23	18. Create_Reporting.usp_SQLServiceStoppedStatus_Get.sql -- starting!
+Info :			2014-10-05T22:54:23	18. Create_Reporting.usp_SQLServiceStoppedStatus_Get.sql -- completed successful!
+Info :			2014-10-05T22:54:23	19. Create_Reporting.SQLServiceStoppedStatus_job.sql -- starting!
+Info :			2014-10-05T22:54:23	19. Create_Reporting.SQLServiceStoppedStatus_job.sql -- completed successful!
+Info :			2014-10-05T22:54:23	20. Create_Collector_BlockedEvents.sql -- starting!
+Info :			2014-10-05T22:54:24	20. Create_Collector_BlockedEvents.sql -- completed successful!
+Info :			2014-10-05T22:54:24	21. Create_Collector.usp_BlockedEvents_Insert.sql -- starting!
+Info :			2014-10-05T22:54:24	21. Create_Collector.usp_BlockedEvents_Insert.sql -- completed successful!
+Info :			2014-10-05T22:54:24	22. Create_BlockedEvents_job.sql -- starting!
+Info :			2014-10-05T22:54:24	22. Create_BlockedEvents_job.sql -- completed successful!
+
+**********************************************************************************************************************************

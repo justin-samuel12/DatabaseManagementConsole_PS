@@ -1,0 +1,49 @@
+﻿-- =============================================
+-- Author: Justin Samuel
+-- Create date: 2/22/2014
+-- Description:	Configure link server
+-- =============================================
+CREATE PROCEDURE Configuration.usp_ServerInstance_LinkedServer_Configure
+	@LinkedServer sysname,
+	@Operation varchar(10)
+AS
+BEGIN TRY;
+	SET NOCOUNT ON;
+		SET @LinkedServer = UPPER(@LinkedServer); -- convert it to upper case
+		
+		-- first delete linked server
+		IF EXISTS (select * from master.sys.servers where name = @linkedserver) begin EXEC master.dbo.sp_dropserver @server=@linkedserver, @droplogins='droplogins' end;
+
+		-- if operation is to create then create linked server
+		IF ( @Operation = 'Create' )
+			BEGIN
+				EXEC master.dbo.sp_addlinkedserver @server = @linkedserver, @srvproduct=N'SQL Server'
+				EXEC master.dbo.sp_addlinkedsrvlogin @rmtsrvname=@linkedserver,@useself=N'True',@locallogin=NULL,@rmtuser=NULL,@rmtpassword=NULL
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'collation compatible', @optvalue=N'false'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'data access', @optvalue=N'true'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'dist', @optvalue=N'false'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'pub', @optvalue=N'false'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'rpc', @optvalue=N'true'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'rpc out', @optvalue=N'true'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'sub', @optvalue=N'false'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'connect timeout', @optvalue=N'0'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'collation name', @optvalue=null
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'lazy schema validation', @optvalue=N'false'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'query timeout', @optvalue=N'0'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'use remote collation', @optvalue=N'true'
+				EXEC master.dbo.sp_serveroption @server=@linkedserver, @optname=N'remote proc transaction promotion', @optvalue=N'true'
+			END;
+
+END TRY	
+BEGIN CATCH
+		-- 1. Raise Error
+			DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +'.' + QUOTENAME(object_name(@@PROCID))
+			DECLARE @ErrorMessageFormat	VARCHAR(8000)	= 'There was an error when executing the stored procedure: %s' + char(13) + 'Please see below for information' + char(13) + char(13) +
+															'Error Message: %s' + char(13) + 
+															'Error Severity: %i' + char(13) + 
+															'Error State: %i' + char(13) + 
+															'Error Number: %i';
+			DECLARE @ErrorMessage		VARCHAR(MAX)	= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
+			RAISERROR (@ErrorMessage,16,1) WITH LOG;		
+		
+END CATCH;

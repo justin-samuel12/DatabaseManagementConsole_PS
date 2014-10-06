@@ -1,0 +1,62 @@
+DECLARE @SQLCmd varchar(4000)='';
+DECLARE @FS INT;
+DECLARE @OLERESULT INT;
+DECLARE @FILEID INT;
+DECLARE @PSFolderPath varchar(100)='C:\Install\'
+DECLARE @PSFile varchar(500)=  @PSFolderPath + 'StartupService.ps1';
+DECLARE @Verbiage varchar(4000)='';
+
+--first create folder if not exists
+EXECUTE MASTER.DBO.XP_CREATE_SUBDIR @PSFolderPath;
+
+select @Verbiage +='
+	$Service = "<Enter SQL Instance Name>"
+	
+	Import-Module “sqlps” -DisableNameChecking
+	add-pssnapin sqlserverprovidersnapin100 -ErrorAction SilentlyContinue
+	add-pssnapin sqlservercmdletsnapin100 -ErrorAction SilentlyContinue
+
+	Clear-History;
+	Clear-Host;
+	
+	$myWindowsID=[System.Security.Principal.WindowsIdentity]::GetCurrent()
+	$myWindowsPrincipal=new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
+	$adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
+ 
+	if (!$myWindowsPrincipal.IsInRole($adminRole))
+	   {
+	   start-process PowerShell.exe -verb Runas -wait -argumentlist (''-File "'+ @PSFile +'"''), $Service
+	   $PID;
+	   stop-process -Id $PID;
+	   exit
+	   }
+	
+	$SqlAgentSrvName = "SQLAgent$"+ $Service
+	$SqlSrvName = "MSSQL$" + $Service
+	Stop-Service $SqlAgentSrvName -Force -Verbose
+	Stop-Service $SqlSrvName -Force -Verbose
+	Start-Service $SqlSrvName -Verbose
+	Start-Service $SqlAgentSrvName -Verbose
+
+	Remove-Item $MyINvocation.InvocationName
+';
+
+SET @Verbiage = REPLACE(@Verbiage,'<Enter SQL Instance Name>','Replicate');
+
+-- Create filesystemobject		
+EXECUTE @OLEResult = sp_OACreate 'Scripting.FileSystemObject' , @FS OUT
+
+-- Opens the file specified by the @File input parameter 
+EXECUTE @OLEResult = sp_OAMethod @FS,'CreateTextFile', @FileID OUT, @PSFile, 1
+
+-- Appends the string value line to the file specified by the @File input parameter
+EXECUTE @OLEResult = sp_OAMethod @FileID, 'WriteLine', Null	, @Verbiage
+
+-- Cleanup
+EXECUTE @OLEResult = sp_OADestroy @FileID
+EXECUTE @OLEResult = sp_OADestroy @FS
+
+GO
+
+
+--exec xp_cmdshell 'PowerShell.exe -file "C:\Install\StartupService.ps1"'

@@ -1,0 +1,56 @@
+﻿-- =============================================
+-- Author: Justin Samuel
+-- Create date: 2/22/2014
+-- Description:	Insert into Server Instance table
+-- =============================================
+CREATE PROCEDURE [Configuration].[usp_ServerInstance_Insert]
+	@ServerName sysname,
+	@InstanceName sysname,
+	@BackupLocation nvarchar(1000)
+AS
+ BEGIN TRY;
+		SET NOCOUNT ON;
+	/*************************** VARIABLES **********************************/
+		DECLARE @CreateDate datetime2 = getdate();
+		DECLARE @ServerTable TABLE ( ServerInstanceId uniqueidentifier default(newid()), ServerName Sysname  null, InstanceName Sysname null, Backuplocation nvarchar(1000));
+		DECLARE @ServerInstanceId uniqueidentifier;
+	/***********************************************************************/
+			BEGIN
+				INSERT @ServerTable( ServerName, InstanceName,  Backuplocation)
+				VALUES ( @ServerName, @InstanceName, @BackupLocation )
+			END;	
+	
+		-- delete all existing server instance	
+			Delete from @ServerTable where ServerInstanceId in ( select t.ServerInstanceId from @ServerTable t inner join [Configuration].[t_ServerInstance] s with(nolock) on t.Servername = s.ServerName AND t.InstanceName = s.InstanceName )
+					
+		-- if there are new server instances
+			IF ( (SELECT Count(1) FROM @ServerTable) > 0)
+				BEGIN
+					SET @ServerInstanceId = ( SELECT ServerInstanceId FROM @ServerTable );
+
+					-- insert into server instance table
+					INSERT INTO [Configuration].[t_ServerInstance] ( ServerInstanceId, ServerName,  InstanceName, BackupLocation, CreateDate )
+					SELECT @ServerInstanceId, UPPER(Ltrim(rtrim(ServerName))), UPPER(Ltrim(rtrim(@InstanceName))), @BackupLocation, @CreateDate from @ServerTable
+	
+					-- update if it's the server that running all the process from
+					UPDATE [Configuration].[t_ServerInstance]
+					SET PrimaryConsoleServer = 1,
+						DMTDBInstalledDatetime = @CreateDate
+					WHERE ServerName +'\' + InstanceName = @@SERVERNAME;
+	
+					Print 'Completed';
+				END;
+			ELSE
+				Print 'There are no new servers to retrieve information from';
+END TRY
+BEGIN CATCH
+	-- 1. Raise Error
+		DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +'.' + QUOTENAME(object_name(@@PROCID))
+		DECLARE @ErrorMessageFormat	VARCHAR(8000)	= 'There was an error when executing the stored procedure: %s' + char(13) + 'Please see below for information' + char(13) + char(13) +
+														'Error Message: %s' + char(13) + 
+														'Error Severity: %i' + char(13) + 
+														'Error State: %i' + char(13) + 
+														'Error Number: %i';
+		DECLARE @ErrorMessage		VARCHAR(MAX)	= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
+		RAISERROR (@ErrorMessage,16,1);				
+END CATCH;

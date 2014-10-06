@@ -1,0 +1,37 @@
+﻿-- =============================================
+-- Author: Justin Samuel
+-- Create date: 11-9-2013
+-- Description:	Trigger to check if any objects belonging to the Configuration schema 
+--				isn't placed to the Configure filegroup. Only tables / Indexes
+-- =============================================
+		CREATE TRIGGER Configuration_Schema_Based_Filegroup_Lock ON DATABASE 
+		FOR CREATE_TABLE, CREATE_INDEX, ALTER_INDEX
+		AS 
+			DECLARE @schemaName [sysname]
+			DECLARE @allowedDataSpaceName [sysname]
+ 
+			SET @schemaName = 'Configuration'
+			SET @allowedDataSpaceName = 'Configure'
+ 
+			DECLARE @objectName [sysname]
+ 
+			SELECT @objectName = 
+				CASE WHEN EVENTDATA().value('(/EVENT_INSTANCE/ObjectType)[1]','nvarchar(max)') = 'INDEX'
+				THEN
+					QUOTENAME(EVENTDATA().value('(/EVENT_INSTANCE/SchemaName)[1]','nvarchar(max)')) + '.' + 
+					QUOTENAME(EVENTDATA().value('(/EVENT_INSTANCE/TargetObjectName)[1]','nvarchar(max)'))                
+				ELSE
+					QUOTENAME(EVENTDATA().value('(/EVENT_INSTANCE/SchemaName)[1]','nvarchar(max)')) + '.' + 
+					QUOTENAME(EVENTDATA().value('(/EVENT_INSTANCE/ObjectName)[1]','nvarchar(max)'))
+				END
+ 
+			IF OBJECT_SCHEMA_NAME(OBJECT_ID(@objectName)) = @schemaName AND EXISTS 
+			(SELECT * FROM [sys].[indexes] WHERE [object_id] = OBJECT_ID(@objectName) AND [data_space_id] != 
+			(SELECT [data_space_id] FROM [sys].[data_spaces] WHERE [sys].[data_spaces].[name] = @allowedDataSpaceName))
+			
+			BEGIN
+			  DECLARE @errorMessage [nvarchar](MAX)
+			  SET @errorMessage = 'Storage objects in the ''' + @schemaName + ''' schema can only place their data in the ''' + @allowedDataSpaceName + ''' data space.'
+			  RAISERROR (@errorMessage, 16, 1)      
+			  ROLLBACK
+			END;

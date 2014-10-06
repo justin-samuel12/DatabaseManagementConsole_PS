@@ -1,0 +1,44 @@
+﻿-- =============================================
+-- Author: Justin Samuel
+-- Create date: 3/15/2013
+-- Description:	Email procedure
+-- =============================================
+CREATE PROCEDURE Configuration.usp_EmailNotification
+(	
+	@Alerttype NVARCHAR(200) = NULL,
+	@Subject NVARCHAR(200),
+	@Body NVARCHAR(MAX),
+	@Recipients NVARCHAR(MAX),
+	@Filename VARCHAR(256) = '' 
+) 
+--WITH ENCRYPTION
+AS
+BEGIN TRY;
+	SET NOCOUNT ON;
+
+	SET @Alerttype = Case when @alerttype = 'Database' THEN 'Database Management <DB@ManagementSQL.net>'
+						when @alerttype = 'Application' THEN 'Application Management <Application@ManagementSQL.net>'
+						else 'System Management <System@ManagementSQL.net>' end;
+	
+	Exec Msdb.dbo.sp_send_dbmaiL    
+			@Profile_name ='DBA mail profile',
+			@From_address = @Alerttype,    
+			@Recipients = @recipients,  
+			@Subject =@SUBJECT,  
+			@Body = @BODY,  
+			@Body_format ='HTML',  
+			@Importance ='High', 
+			@File_attachments = @FILENAME
+
+END TRY
+BEGIN CATCH
+	-- 1. Raise Error
+		DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +'.' + QUOTENAME(object_name(@@PROCID))
+		DECLARE @ErrorMessageFormat	VARCHAR(8000)	= 'There was an error when executing the stored procedure: %s' + char(13) + 'Please see below for information' + char(13) + char(13) +
+														'Error Message: %s' + char(13) + 
+														'Error Severity: %i' + char(13) + 
+														'Error State: %i' + char(13) + 
+														'Error Number: %i';
+		DECLARE @ErrorMessage		VARCHAR(MAX)	= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
+		RAISERROR (@ErrorMessage,16,1);				
+END CATCH;

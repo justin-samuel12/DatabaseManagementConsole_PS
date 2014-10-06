@@ -1,0 +1,31 @@
+﻿-- =============================================
+-- Author: Justin Samuel
+-- Create date: 11-9-2013
+-- Description:	Get list of files to be executed
+-- =============================================
+CREATE PROCEDURE Configuration.usp_VersionControl_GetList
+	@VersionControlTable [Configuration].[VersionControlList] READONLY
+AS
+BEGIN TRY;
+	SET NOCOUNT ON;
+
+	SELECT VersionControlListId, ScriptName, FullFileName
+	FROM @versionControlTable 
+	WHERE VersionControlListId NOT IN (
+					select A.VersionControlListid
+					from @VersionControlTable A,
+						 ( SELECT Scriptname from Configuration.t_VersionControl with(nolock) where isError = 'False' ) B
+					where A.ScriptName = B.ScriptName 
+					)
+END TRY
+BEGIN CATCH
+	-- 1. Raise Error
+		DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +'.' + QUOTENAME(object_name(@@PROCID))
+		DECLARE @ErrorMessageFormat	VARCHAR(8000)	= 'There was an error when executing the stored procedure: %s' + char(13) + 'Please see below for information' + char(13) + char(13) +
+														'Error Message: %s' + char(13) + 
+														'Error Severity: %i' + char(13) + 
+														'Error State: %i' + char(13) + 
+														'Error Number: %i';
+		DECLARE @ErrorMessage		VARCHAR(MAX)	= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
+		RAISERROR (@ErrorMessage,16,1);		
+END CATCH;

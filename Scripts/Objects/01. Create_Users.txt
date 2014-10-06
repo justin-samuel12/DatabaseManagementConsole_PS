@@ -1,0 +1,69 @@
+﻿USE [<Database_Name>]
+/********************* VARIABLES *******************************/
+	DECLARE @xml xml;
+	DECLARE @Username varchar(256);
+	DECLARE @Password varchar(256);
+	DECLARE @ServerRole varchar(256);
+	DECLARE @DatabaseRole varchar(256);
+	DECLARE @SQL nvarchar(max)='';
+	DECLARE @Cur CURSOR;
+/***************************************************************/
+-- 1. Get XML information
+SELECT @Xml = CAST(BulkColumn AS XML)
+FROM OPENROWSET (BULK '<Configuration_File>', SINGLE_BLOB) AS DATA;
+
+-- 2. Declare Cursor for users
+SET @Cur = CURSOR FOR 
+SELECT t.c.value('@Name','NVARCHAR(256)') , 
+		t.c.value('@Password','NVARCHAR(256)'),
+		t.c.value('@ServerRole','NVARCHAR(256)'),
+		t.c.value('@DatabaseRole','NVARCHAR(256)')
+FROM @xml.nodes('/Root/DMCConfiguration/DMCDatabaseUsers/Users/User') AS T(c)
+
+-- 3. Open Cursor
+OPEN @Cur
+		
+-- 4. Fetch
+FETCH NEXT FROM @Cur INTO @Username, @Password,@ServerRole,@DatabaseRole
+
+-- 5. Start loop
+WHILE @@FETCH_STATUS = 0
+BEGIN
+	-- first remove login from server if exists
+	IF EXISTS ( SELECT 1 FROM MASTER.SYS.SERVER_PRINCIPALS WHERE NAME = @Username )
+	BEGIN
+		PRINT 'Dropping Login: ' + @Username;
+		EXEC ('Drop Login ' + @Username );
+	END; 
+	-- then remove user from database and also any owned schemas
+	if USER_ID(@Username) is not null
+	BEGIN
+		-- drop owned schemas
+		SELECT @sql += 'ALTER AUTHORIZATION ON SCHEMA::' + name +' TO dbo '
+		FROM [<Database_Name>].sys.schemas 
+		WHERE principal_id = USER_ID(''+ @Username + '')
+		--print (@sql)
+		exec (@sql);
+
+		-- then user
+		PRINT 'Dropping User: '+ @Username;
+		EXEC ('Drop User ' + @Username );
+	END;
+
+	-- then create login and user
+	PRINT 'Creating Login: ' + @Username;		 
+	EXEC ('CREATE LOGIN ' + @username +' WITH PASSWORD='''+ @password +''', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF');
+					
+					
+	PRINT 'Creating User: ' + @Username
+	EXEC ('CREATE USER ' + @username +' FOR LOGIN ' + @username)
+				
+	IF ( @ServerRole NOT IN ('','public')  ) BEGIN EXEC ('ALTER SERVER ROLE [' + @ServerRole +'] ADD MEMBER [' + @username + ']') END;
+	IF ( @DatabaseRole NOT IN ('')  ) BEGIN EXEC ('ALTER ROLE [' + @DatabaseRole +'] ADD MEMBER [' + @username + ']') END;
+								
+    FETCH NEXT FROM @Cur INTO @Username, @Password,@ServerRole,@DatabaseRole
+END
+
+-- 6. Cleanup
+CLOSE @Cur;
+DEALLOCATE @Cur;
