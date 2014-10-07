@@ -1,6 +1,3 @@
-:setvar Database_Name "DatabaseManagementConsole"
-:setvar File_Name "09. Create_Collector.usp_Maintenance_Backups.sql"
-
 SET ANSI_NULLS, ANSI_PADDING, ANSI_WARNINGS, ARITHABORT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER ON;
 SET NUMERIC_ROUNDABORT OFF;
 GO
@@ -50,6 +47,7 @@ AS
 	DECLARE @Database_ID						INT;
 	DECLARE @Database_Name						SYSNAME;
 	DECLARE @Recovery_Model						INT;
+	DECLARE @VerifyBackupFile					NVARCHAR(4000) = '''';
 /***************************************************************/
 BEGIN TRY;
 	SET NOCOUNT ON; SET XACT_ABORT ON;
@@ -133,7 +131,22 @@ BEGIN TRY;
 							BEGIN 
 								SET @ErrorMsg = ''Verify failed. Backup information for database: '' + @database_name + '' not found.'';
 								RAISERROR (@ErrorMsg, 16, 1) WITH LOG; 
+								RETURN;
 							END
+						ELSE
+							BEGIN
+								SET @VerifyBackupFile = ''RESTORE VERIFYONLY 
+														 FROM DISK = ''''''++ @Backupfile +''''''
+														 WITH CHECKSUM'';
+								
+								EXEC SP_EXECUTESQL @VerifyBackupFile;
+								if @@ERROR <>0 
+									BEGIN
+										SET @ErrorMsg = ''Verify failed for file: ''+ @Backupfile +''. Backup information for database: '' + @database_name + '' not found.'';
+										RAISERROR (@ErrorMsg, 16, 1) WITH LOG;
+										RETURN;
+									END;
+							END;
 				
 					-- insert into [Maintenance].[t_Backupset]
 						EXEC [Collector].[usp_Backupset_Insert] @backupsetid, @backupfile, @Date_Now ;
