@@ -1,0 +1,92 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+:: Log File for DatabaseManagementConsole
+:: Date Creation: Monday, October 13, 2014
+:: Powershell Version: 2.0
+:: Executed by: 4DSECURITY\justin_samuel
+:: Executed Machine: 4DAA1001139
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Level			Date			Event
+-------------------	-------------------	---------------------------------------------------------------------------------------------------------
+Info :			2014-10-13T15:26:09	Scripts directory location: C:\GitHub\DatabaseManagementConsole_PS\Scripts
+Info :			2014-10-13T15:26:09	User selection: Create
+Info :			2014-10-13T15:26:09	Create on Instance: 4DAA1001139\LAB
+Info :			2014-10-13T15:26:09	Create for Database: DatabaseManagementConsole
+Info :			2014-10-13T15:26:09	--- Folder Information ----
+							1) Primary_Data = C:\MSSQL\LAB\Data
+							2) Secondary_Configuration_Data = C:\MSSQL\LAB\Data
+							3) Primary_Log = C:\MSSQL\LAB\Tlog
+							4) TempDB_Data = C:\MSSQL\LAB\Temp
+							5) TempDB_Log = C:\MSSQL\LAB\Temp
+Info :			2014-10-13T15:26:09	--- Database Configuration ----
+							1) LogFileGrowthMB = 5
+							2) LogSizeMB = 80
+							3) LogTotalLogSizeMB = 320
+							4) LogLogMaxFileSizeMB = 1024
+							5) RecoveryModel = Full
+Info :			2014-10-13T15:26:09	---- Server Configuration ----
+							Will be executing all the contents in the Server Configuration node
+Info :			2014-10-13T15:26:09	01. Server_Configuration.sql -- starting!
+Info :			2014-10-13T15:26:10	01. Server_Configuration.sql -- completed successful!
+Info :			2014-10-13T15:26:10	02. Create_SQL_profile_mail.sql -- starting!
+Info :			2014-10-13T15:26:10	02. Create_SQL_profile_mail.sql -- completed successful!
+Info :			2014-10-13T15:26:10	03. Create_Database.sql -- starting!
+Info :			2014-10-13T15:26:15	03. Create_Database.sql -- completed successful!
+Info :			2014-10-13T15:26:15	04. Create_Database_Objects.sql -- starting!
+Info :			2014-10-13T15:26:15	04. Create_Database_Objects.sql -- completed successful!
+Info :			2014-10-13T15:26:15	05. Create_Configuration.svfn_DefaultFolderLocation_Get.sql -- starting!
+Info :			2014-10-13T15:26:15	05. Create_Configuration.svfn_DefaultFolderLocation_Get.sql -- completed successful!
+Info :			2014-10-13T15:26:15	06. Create_Configuration.usp_DefaultFolderLocation_Reconfigure.sql -- starting!
+Info :			2014-10-13T15:26:15	06. Create_Configuration.usp_DefaultFolderLocation_Reconfigure.sql -- completed successful!
+Info :			2014-10-13T15:26:15	07. Create_Collector.usp_Backupset_Insert.sql -- starting!
+Info :			2014-10-13T15:26:15	07. Create_Collector.usp_Backupset_Insert.sql -- completed successful!
+Info :			2014-10-13T15:26:15	08. Create_Collector.usp_BackupsetOperation_Insert.sql -- starting!
+Info :			2014-10-13T15:26:15	08. Create_Collector.usp_BackupsetOperation_Insert.sql -- completed successful!
+Info :			2014-10-13T15:26:15	09. Create_Collector.usp_Maintenance_Backups_Retrieve.sql -- starting!
+Info :			2014-10-13T15:26:15	09. Create_Collector.usp_Maintenance_Backups_Retrieve.sql -- completed successful!
+Info :			2014-10-13T15:26:15	10. Create_Collector.usp_Maintenance_Backups_CreateRestoreScripts.sql -- starting!
+Info :			2014-10-13T15:26:15	10. Create_Collector.usp_Maintenance_Backups_CreateRestoreScripts.sql -- completed successful!
+Info :			2014-10-13T15:26:15	11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql -- starting!
+Info :			2014-10-13T15:26:15	11. Create_Collector.usp_Maintenance_Backups_DeleteFolderContents.sql -- completed successful!
+Info :			2014-10-13T15:26:15	12. Create_Collector.Maintenance_Backups_JobCreate.sql -- starting!
+Info :			2014-10-13T15:26:16	12. Create_Collector.Maintenance_Backups_JobCreate.sql -- completed successful!
+Info :			2014-10-13T15:26:16	13. Create_Collector.Maintenance_Backups_DeleteFolderContents_JobCreate.sql -- starting!
+Info :			2014-10-13T15:26:16	13. Create_Collector.Maintenance_Backups_DeleteFolderContents_JobCreate.sql -- completed successful!
+Info :			2014-10-13T15:26:16	14. Create_Collector.v_FailedSQLJobs.sql -- starting!
+Info :			2014-10-13T15:26:16	14. Create_Collector.v_FailedSQLJobs.sql -- completed successful!
+Info :			2014-10-13T15:26:16	15. Create_Configuration.usp_AlertEmail_Get.sql -- starting!
+Info :			2014-10-13T15:26:16	15. Create_Configuration.usp_AlertEmail_Get.sql -- completed successful!
+Info :			2014-10-13T15:26:16	16. Create_Reporting.usp_FailedSQLJobsHistory_Insert.sql -- starting!
+Info :			2014-10-13T15:26:16	16. Create_Reporting.usp_FailedSQLJobsHistory_Insert.sql -- completed successful!
+Info :			2014-10-13T15:26:16	17. Create_Reporting.FailedSQLJobs_job.sql -- starting!
+Info :			2014-10-13T15:26:16	17. Create_Reporting.FailedSQLJobs_job.sql -- completed successful!
+Info :			2014-10-13T15:26:16	18. Create_Reporting.usp_SQLServiceStoppedStatus_Get.sql -- starting!
+Info :			2014-10-13T15:26:16	18. Create_Reporting.usp_SQLServiceStoppedStatus_Get.sql -- completed successful!
+Info :			2014-10-13T15:26:16	19. Create_Reporting.SQLServiceStoppedStatus_job.sql -- starting!
+Info :			2014-10-13T15:26:16	19. Create_Reporting.SQLServiceStoppedStatus_job.sql -- completed successful!
+Info :			2014-10-13T15:26:16	20. Create_Collector_BlockedEvents.sql -- starting!
+Info :			2014-10-13T15:26:16	20. Create_Collector_BlockedEvents.sql -- completed successful!
+Info :			2014-10-13T15:26:16	21. Create_Collector.usp_BlockedEvents_Insert.sql -- starting!
+Info :			2014-10-13T15:26:16	21. Create_Collector.usp_BlockedEvents_Insert.sql -- completed successful!
+Info :			2014-10-13T15:26:16	22. Create_BlockedEvents_job.sql -- starting!
+Info :			2014-10-13T15:26:16	22. Create_BlockedEvents_job.sql -- completed successful!
+Info :			2014-10-13T15:26:16	23. Create_Configuration.usp_Maintenance_Backups_Reset.sql -- starting!
+Info :			2014-10-13T15:26:16	23. Create_Configuration.usp_Maintenance_Backups_Reset.sql -- completed successful!
+Info :			2014-10-13T15:26:16	24. Create_Collector_DeadlockEvents.sql -- starting!
+Info :			2014-10-13T15:26:16	24. Create_Collector_DeadlockEvents.sql -- completed successful!
+Info :			2014-10-13T15:26:16	25. Create_Collector.usp_DeadlockEvents_Insert.sql -- starting!
+Info :			2014-10-13T15:26:16	25. Create_Collector.usp_DeadlockEvents_Insert.sql -- completed successful!
+Info :			2014-10-13T15:26:16	26. Create_DeadlockEvents_job.sql -- starting!
+Info :			2014-10-13T15:26:16	26. Create_DeadlockEvents_job.sql -- completed successful!
+
+**********************************************************************************************************************************
+Info :			2014-10-13T15:26:16	Setting Min/Max Memory for server -- initiated
+Info :			2014-10-13T15:26:17	Setting Min/Max Memory for server -- completed
+
+**********************************************************************************************************************************
+Info :			2014-10-13T15:26:17	Restart of SQL MSSQL$LAB service -- initiated
+Info :			2014-10-13T15:26:22	Service status of SQL Server (LAB): Running
+Info :			2014-10-13T15:26:22	Service status of SQL Server Agent (LAB): Running
+Info :			2014-10-13T15:26:22	Restart of SQL MSSQL$LAB service -- completed
+
+**********************************************************************************************************************************

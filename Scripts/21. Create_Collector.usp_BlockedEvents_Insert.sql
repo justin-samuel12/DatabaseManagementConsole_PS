@@ -39,6 +39,8 @@ BEGIN TRY;
 				[status] VARCHAR(100), clientapp VARCHAR(100), hostname VARCHAR(100), loginname VARCHAR(100), 
 				currentdb VARCHAR(100), inputbuf VARCHAR(1000) )
 	/*************************************************************************/
+		EXEC [Configuration].[usp_AlertEmail_Get] @recipients OUTPUT; -- get email
+
 	--Blocked process details
 		INSERT INTO #BlockingDetails
 		SELECT 
@@ -69,8 +71,6 @@ BEGIN TRY;
 			currentdb		= isnull(db_name(d.c.value(''@currentdb'',''varchar(100)'')),''''),
 			inputbuf		= isnull(d.c.value(''inputbuf[1]'',''varchar(1000)''),'''')
 		FROM @blockingxml.nodes(''TextData/blocked-process-report/blocking-process/process'') d(c)
-
-		EXEC [Configuration].[usp_AlertEmail_Get] @recipients OUTPUT; -- get email
 
 		SELECT @MessageBody =
 		(

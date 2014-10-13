@@ -9,7 +9,7 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Collector.usp_Maintenance_Backups';
+	DECLARE @ObjectName varchar(256) = 'Collector.usp_Maintenance_Backups_Retrieve';
 	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName
 	DECLARE @ReleaseDate datetime = '10/1/2013';
 	DECLARE @DTNow DateTime2 = getdate();

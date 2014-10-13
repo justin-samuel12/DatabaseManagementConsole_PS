@@ -9,7 +9,7 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = '$(Database_Name).Reporting.FailedSQLJobs_job';
+	DECLARE @ObjectName varchar(256) = '$(Database_Name).Reporting.FailedSQLJobs';
 	DECLARE @Description VARCHAR(100)='Creation of job: ' + @ObjectName
 	DECLARE @ReleaseDate datetime = '10/1/2013';
 	DECLARE @DTNow DateTime2 = getdate();

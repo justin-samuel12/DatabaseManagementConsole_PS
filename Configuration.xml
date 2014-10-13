@@ -1,22 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Root>
   <InstancesConfiguration>
-    <PrimaryInstance Server="JSAMUEL12-ASUS" Instance="LAB" Backuplocation="F:\SQLServer\LAB\Backup\" Username="" Password="" />
+    <PrimaryInstance Server="4DAA1001139" Instance="LAB" Backuplocation="C:\MSSQL\LAB\Backup\" Username="" Password="" />
     <SecondaryInstances>
       <Instances>
-        <Database Server="JSAMUEL12-ASUS" Instance="REPORTS" Backuplocation="F:\SQLServer\REPORTS\Backup\" />
-        <Database Server="JSAMUEL12-ASUS" Instance="REPLICATE" Backuplocation="F:\SQLServer\REPLICATE\Backup\" />
+        <Database Server="4DAA1001139" Instance="REPORTS" Backuplocation="C:\MSSQL\REPORTS\Backup\" />
+        <!--<Database Server="JSAMUEL12-ASUS" Instance="REPLICATE" Backuplocation="C:\MSSQL\REPLICATE\Backup\" />-->
       </Instances>
     </SecondaryInstances>
   </InstancesConfiguration>
   <DMCConfiguration>
     <DMCDatabaseFolders>
       <Folder>
-        <file Name="Primary_Data" Location="F:\SQLServer\LAB\Data" />
-        <file Name="Secondary_Configuration_Data" Location="F:\SQLServer\LAB\Data" />
-        <file Name="Primary_Log" Location="F:\SQLServer\LAB\Tlog" />
-        <file Name="TempDB_Data" Location="F:\SQLServer\LAB\Temp" />
-        <file Name="TempDB_Log" Location="F:\SQLServer\LAB\Temp"  />
+        <file Name="Primary_Data" Location="C:\MSSQL\LAB\Data" />
+        <file Name="Secondary_Configuration_Data" Location="C:\MSSQL\LAB\Data" />
+        <file Name="Primary_Log" Location="C:\MSSQL\LAB\Tlog" />
+        <file Name="TempDB_Data" Location="C:\MSSQL\LAB\Temp" />
+        <file Name="TempDB_Log" Location="C:\MSSQL\LAB\Temp"  />
       </Folder>
     </DMCDatabaseFolders>
     <DMCDatabaseProperties>
