@@ -4,7 +4,6 @@ GO
 USE [master]
 GO
 -- =============================================
--- Author: Justin Samuel
 -- Create date: 11-5-2013
 -- Description:	Installation of SQL Mail Configuration
 -- =============================================

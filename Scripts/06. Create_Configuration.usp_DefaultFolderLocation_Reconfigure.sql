@@ -21,7 +21,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author:	Justin Samuel
 -- Create date: 10/02/2014
 -- Description:	Reconfigure Default Location for server
 -- =============================================

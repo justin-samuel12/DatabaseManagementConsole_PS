@@ -22,7 +22,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author: Justin Samuel
 -- Create date: 10/6/2014
 -- Description: resetting all the backup tables and removing all backup items on server 
 -- =============================================

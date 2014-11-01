@@ -21,7 +21,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author:	Justin Samuel
 -- Create date: 11/29/2013
 -- Description:	Insert into Monitor.t_DeadlockEvents_Insert
 -- =============================================

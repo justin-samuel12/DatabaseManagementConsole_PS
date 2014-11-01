@@ -21,7 +21,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author:	Justin Samuel
 -- Create date: 3/1/2013
 -- Description:	Full / Differential / Transaction Log Backup of database. Due to maintanance wizard not correctly handling database ready only state  
 -- =============================================

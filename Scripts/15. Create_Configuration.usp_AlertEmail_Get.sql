@@ -22,7 +22,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author: Justin Samuel
 -- Create date: 5/8/2013
 -- Description: Retrieve the email address 
 -- =============================================

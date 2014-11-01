@@ -23,7 +23,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author: Justin Samuel
 -- Create date: 5/8/2013
 -- Description: Insert into [Reports].[t_FailedSQLJobsHistory]
 -- =============================================

@@ -21,7 +21,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author:	Justin Samuel
 -- Create date: 3/23/2013
 -- Description:	Backup SQL Default file location function
 -- =============================================

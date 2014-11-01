@@ -22,7 +22,6 @@ BEGIN TRY
 -- 2. Create of object	
 			SET @SQL = '
 -- =============================================
--- Author:	Justin Samuel
 -- Create date: 3/1/2013
 -- Description:	SP that will create job to delete folder contents
 -- =============================================

@@ -17,5 +17,6 @@ IF OBJECT_ID('Collector.t_BackupsetOperation') IS NOT NULL BEGIN DROP TABLE Coll
 IF OBJECT_ID('Reporting.t_FailedSQLJobsHistory') IS NOT NULL BEGIN DROP TABLE Reporting.t_FailedSQLJobsHistory END
 
 IF TYPE_ID('Configuration.VersionControlList') IS NOT NULL BEGIN DROP TYPE Configuration.VersionControlList END
+if TYPE_ID('Reporting.udtt_SQLCurrentJobResults') is not null BEGIN drop type Reporting.udtt_SQLCurrentJobResults END
 
 IF EXISTS (SELECT * FROM sys.triggers WHERE parent_class = 0 AND name = 'Configuration_Schema_Based_Filegroup_Lock') BEGIN DROP TRIGGER Configuration_Schema_Based_Filegroup_Lock ON DATABASE END

@@ -21,7 +21,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author: Justin Samuel
 -- Create date: 3/1/2013
 -- Description:	Insert from MSDB..Backupset onto Collector.t_Backupset
 -- =============================================

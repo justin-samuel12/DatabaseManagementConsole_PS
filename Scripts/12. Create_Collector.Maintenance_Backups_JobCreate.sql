@@ -21,7 +21,6 @@ BEGIN TRY
 	-- 1. Create table	
 			SET @SQL = '
 -- =============================================
--- Author:	Justin Samuel
 -- Create date: 3/1/2013
 -- Description:	SP that will create job that will execute the backup process
 -- =============================================

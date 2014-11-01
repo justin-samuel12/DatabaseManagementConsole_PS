@@ -22,7 +22,6 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Author: Justin Samuel
 -- Create date: 09/25/2014
 -- Description: Get all sql stopped services
 -- =============================================
