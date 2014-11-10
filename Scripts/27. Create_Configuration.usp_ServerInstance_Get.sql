@@ -55,7 +55,7 @@ END CATCH;
 			@ObjectName = @ObjectName, @Option = @Option, @Description = @Description, @ReleaseDate = @ReleaseDate, @isError = 0, @ErrorMsg = NULL;
 
 	-- 4. grant exec to reporting user
-	EXEC ('GRANT EXEC ON ' + @ObjectName + ' TO DMTReportsUser');
+	EXEC ('GRANT EXEC ON ' + @ObjectName + ' TO DMReportsUser');
 
 END TRY
 BEGIN CATCH

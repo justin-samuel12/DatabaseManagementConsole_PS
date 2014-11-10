@@ -1,22 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Root>
   <InstancesConfiguration>
-    <PrimaryInstance Server="4DAA1001139" Instance="LAB" Backuplocation="C:\MSSQL\LAB\Backup\" Username="" Password="" />
+    <PrimaryInstance Server="JSAMUEL12-ASUS" Instance="LAB" Backuplocation="F:\SQLServer\LAB\LAB\Backup\" Username="" Password="" />
     <SecondaryInstances>
       <Instances>
-        <Database Server="4DAA1001139" Instance="REPORTS" Backuplocation="C:\MSSQL\REPORTS\Backup\" />
-        <!--<Database Server="JSAMUEL12-ASUS" Instance="REPLICATE" Backuplocation="C:\MSSQL\REPLICATE\Backup\" />-->
+        <Database Server="JSAMUEL12-ASUS" Instance="REPORTS" Backuplocation="F:\SQLServer\LAB\REPORTS\Backup\" />
+        <Database Server="JSAMUEL12-ASUS" Instance="REPLICATE" Backuplocation="F:\SQLServer\LAB\REPLICATE\Backup\" />
       </Instances>
     </SecondaryInstances>
   </InstancesConfiguration>
   <DMCConfiguration>
     <DMCDatabaseFolders>
       <Folder>
-        <file Name="Primary_Data" Location="C:\MSSQL\LAB\Data" />
-        <file Name="Secondary_Configuration_Data" Location="C:\MSSQL\LAB\Data" />
-        <file Name="Primary_Log" Location="C:\MSSQL\LAB\Tlog" />
-        <file Name="TempDB_Data" Location="C:\MSSQL\LAB\Temp" />
-        <file Name="TempDB_Log" Location="C:\MSSQL\LAB\Temp"  />
+        <file Name="Primary_Data" Location="F:\SQLServer\LAB\LAB\Data" />
+        <file Name="Secondary_Configuration_Data" Location="F:\SQLServer\LAB\LAB\Data" />
+        <file Name="Primary_Log" Location="F:\SQLServer\LAB\LAB\Tlog" />
+        <file Name="TempDB_Data" Location="F:\SQLServer\LAB\LAB\Temp" />
+        <file Name="TempDB_Log" Location="F:\SQLServer\LAB\LAB\Temp"  />
       </Folder>
     </DMCDatabaseFolders>
     <DMCDatabaseProperties>
@@ -30,15 +30,15 @@
     </DMCDatabaseProperties>
     <DMCDatabaseUsers>
       <Users>
-        <User Name="DMTAdmin" Password="pa$$w0rd1" ServerRole="sysadmin" DatabaseRole="db_owner" />
-        <User Name="DMTReportsUser" Password="pa$$w0rd1" ServerRole="public" DatabaseRole="" />
+        <User Name="DMAdmin" Password="pa$$w0rd1" ServerRole="sysadmin" DatabaseRole="db_owner" />
+        <User Name="DMReportsUser" Password="pa$$w0rd1" ServerRole="public" DatabaseRole="" />
       </Users>
     </DMCDatabaseUsers>
     <DMCDatabaseSchemas>
       <Schemas>
-        <Schema Name="Reporting" Authorization="DMTAdmin" />
-        <Schema Name="Collector" Authorization="DMTAdmin" />
-        <Schema Name="Configuration" Authorization="DMTAdmin" />
+        <Schema Name="Reporting" Authorization="dbo" GrantExecution="True" AddUser="DMReportsUser" />
+        <Schema Name="Collector" Authorization="dbo" GrantExecution="false" AddUser=""/>
+        <Schema Name="Configuration" Authorization="dbo" GrantExecution="false" AddUser="" />
       </Schemas>
     </DMCDatabaseSchemas>
   </DMCConfiguration>

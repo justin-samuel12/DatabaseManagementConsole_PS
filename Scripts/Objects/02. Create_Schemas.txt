@@ -4,6 +4,8 @@
 	DECLARE @xml xml;
 	DECLARE @Schema varchar(256);
 	DECLARE @Authorization varchar(256);
+	DECLARE @GrantExecution bit;
+	DECLARE @AddUser varchar(256);
 	DECLARE @SQL nvarchar(max)='';
 	DECLARE @Cur CURSOR;
 /***************************************************************/
@@ -14,14 +16,16 @@ FROM OPENROWSET (BULK '<Configuration_File>', SINGLE_BLOB) AS DATA;
 -- 2. Declare Cursor for Schemas
 SET @Cur = CURSOR FOR 
 SELECT t.c.value('@Name','NVARCHAR(256)') , 
-		t.c.value('@Authorization','NVARCHAR(256)')
+		t.c.value('@Authorization','NVARCHAR(256)'),
+		t.c.value('@GrantExecution','BIT'),
+		t.c.value('@AddUser','VARCHAR(256)')
 FROM @xml.nodes('/Root/DMCConfiguration/DMCDatabaseSchemas/Schemas/Schema') AS T(c)
 
 -- 3. Open Cursor
 OPEN @Cur
 		
 -- 4. Fetch
-FETCH NEXT FROM @Cur INTO @Schema, @Authorization
+FETCH NEXT FROM @Cur INTO @Schema, @Authorization,@GrantExecution,@AddUser
 
 -- 5. Start loop
 WHILE @@FETCH_STATUS = 0
@@ -36,8 +40,10 @@ WHILE @@FETCH_STATUS = 0
 		-- then creating schema
 		PRINT 'Creating Schema: ' + @schema
 		EXEC ('CREATE SCHEMA ' + @schema +' AUTHORIZATION ' + @Authorization)
+
+		IF ( @GrantExecution = 'true' AND @AddUser NOT IN ('')) BEGIN EXEC ('GRANT EXECUTE ON SCHEMA:: '+ @schema + ' to ' + @AddUser) END; 
 			
-		FETCH NEXT FROM @Cur INTO @Schema, @Authorization
+		FETCH NEXT FROM @Cur INTO @Schema, @Authorization,@GrantExecution,@AddUser
 	END
 
 -- 6. Cleanup
