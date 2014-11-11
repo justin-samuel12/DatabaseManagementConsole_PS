@@ -57,7 +57,8 @@ BEGIN TRY;
 		DECLARE @Datediff							INT;
 		DECLARE @MaintenanceBackupSetId				INT;
 		DECLARE @JobName							VARCHAR(256);
-		DECLARE @JobCommand							VARCHAR(1000);
+		DECLARE @JobCommand1						VARCHAR(1000);
+		DECLARE @JobCommand2						VARCHAR(1000);
 	/***************************************************************/
 	
 	SELECT @FullBackupPeriod = Configuration.svfn_BackupConversion_Get(Period, Interval), @FullBackupIsActive = isActive FROM [Configuration].[t_BackupManagement] (nolock) WHERE ProcessType = ''Full Backup''
@@ -94,7 +95,7 @@ BEGIN TRY;
 						SET @Backupfile =  @backupfolder + ''\'' + @database_name + ''_Database_Full_'' + @backupfileconvention  + ''.bak'';
 						SET @SQL =''BACKUP DATABASE ['' + @database_name +'']
 									TO DISK = N''''''''''+ @backupfile + '''''''''' 
-									WITH NOFORMAT, NOINIT, NAME = N''''''''''+ + @database_name + ''_Database_Full_'' + @backupfileconvention + '''''''''', SKIP, REWIND, NOUNLOAD, NO_COMPRESSION, CHECKSUM,  STATS = 10''			
+									WITH NOFORMAT, NOINIT, NAME = N''''''''''+ + @database_name + ''_Database_Full_'' + @backupfileconvention + '''''''''', SKIP, REWIND, NOUNLOAD, COMPRESSION, CHECKSUM,  STATS = 10''			
 					END;
 				-- 2b2. Differential backups. Run every 4 hrs only starting at 4AM
 				ELSE IF @Database_ID > 4 AND @DiffBackupIsActive = ''true'' AND @datediff >= @DiffBackupPeriod
@@ -104,7 +105,7 @@ BEGIN TRY;
 						SET @Backupfile =  @backupfolder + ''\'' + @database_name + ''_Database_Differential_'' + @backupfileconvention  + ''.dif'';
 						SET @SQL =''BACKUP DATABASE ['' + @database_name +'']
 									TO DISK = N''''''''''+ @backupfile + '''''''''' 
-									WITH NOFORMAT, NOINIT, DIFFERENTIAL, NAME = N''''''''''++ @database_name + ''_Database_Differential_'' + @backupfileconvention +'''''''''', SKIP, REWIND, NOUNLOAD, NO_COMPRESSION, CHECKSUM, STATS = 10''			
+									WITH NOFORMAT, NOINIT, DIFFERENTIAL, NAME = N''''''''''++ @database_name + ''_Database_Differential_'' + @backupfileconvention +'''''''''', SKIP, REWIND, NOUNLOAD, COMPRESSION, CHECKSUM, STATS = 10''			
 					END;
 				-- 2b3. Transaction Log
 				ELSE IF @Database_ID > 4 AND @Recovery_Model IN (1,2) AND @TransLogBackupIsActive = ''true'' AND @datediff >= @TransLogBackupPeriod
@@ -114,7 +115,7 @@ BEGIN TRY;
 						SET @Backupfile =  @backupfolder + ''\'' + @database_name + ''_Transaction_Log_'' + @backupfileconvention  + ''.trn'';
 						SET @SQL =''BACKUP LOG ['' + @database_name +'']
 									TO DISK = N''''''''''+ @backupfile + '''''''''' 
-									WITH NOFORMAT, NOINIT, NAME = N''''''''''++ @database_name + ''_Transaction_Log_'' + @backupfileconvention +'''''''''', SKIP, REWIND, NOUNLOAD, NO_COMPRESSION, CHECKSUM, STATS = 10''			
+									WITH NOFORMAT, NOINIT, NAME = N''''''''''++ @database_name + ''_Transaction_Log_'' + @backupfileconvention +'''''''''', SKIP, REWIND, NOUNLOAD, COMPRESSION, CHECKSUM, STATS = 10''			
 					END;	
 
 				-- 2c. insert into Collector.usp_Maintenance_Backups_Retrieve and create dynamic job
@@ -123,7 +124,7 @@ BEGIN TRY;
 							SET @JobName = FORMATMESSAGE(''DMC.Backup_%s_%s_[%s]'', @Database_Name, @Operationtype, convert(varchar,@Date_Now, 120));
 							EXEC [Collector].[usp_Maintenance_Backups_Merge] @DatabaseName = @Database_Name, @JobName = @JobName, @MaintenanceBackupSetId = @MaintenanceBackupSetId OUTPUT
 
-							SET @JobCommand = ''USE '' + QUOTENAME(@DMCDatabase) + '' 
+							SET @JobCommand1 = ''USE '' + QUOTENAME(@DMCDatabase) + '' 
 									GO
 									EXEC [Collector].[usp_Maintenance_Backups_Retrieve]
 											@MaintenanceBackupSetId = '''''' + CAST(@MaintenanceBackupSetId as varchar(100)) + '''''', 
@@ -133,9 +134,30 @@ BEGIN TRY;
 											@ExecutionCommand = '''''' + @SQL + '''''',
 											@database_name = '''''' + @Database_Name + '''''''';
 
+							SET @JobCommand2 = ''USE '' + QUOTENAME(@DMCDatabase) + '' 
+									GO 
+									EXEC [Collector].[usp_Maintenance_Backups_CreateRestoreScripts] '''''' + @Database_Name + '''''''';
+
 							IF EXISTS ( select job_id  FROM msdb.dbo.sysjobs WHERE name = @JobName ) begin EXEC msdb.dbo.sp_delete_job @job_name= @JobName, @delete_unused_schedule=1 end ;
 							EXEC msdb..sp_add_job @job_name= @JobName, @enabled=1, @delete_level=1, @description= @JobName, @owner_login_name=N''sa'';
-							EXEC msdb..sp_add_jobstep @job_name= @JobName, @step_name= @Operationtype,	@subsystem = N''TSQL'', @command= @JobCommand, @database_name=N''master'';
+							EXEC msdb..sp_add_jobstep @job_name= @JobName, @step_name= @Operationtype,	
+										@step_id=1, 
+										@cmdexec_success_code=0, 
+										@on_success_action=3, 
+										@on_success_step_id=0, 
+										@on_fail_action=2, 
+										@subsystem = N''TSQL'', 
+										@command= @JobCommand1, 
+										@database_name=N''master'';
+							EXEC msdb..sp_add_jobstep @job_name= @JobName, @step_name=N''Create restore scripts'', 
+										@step_id=2, 
+										@cmdexec_success_code=0, 
+										@on_success_action=1, 
+										@on_success_step_id=0, 
+										@on_fail_action=2, 
+										@subsystem=N''TSQL'', 
+										@command= @JobCommand2, 
+										@database_name=N''master'';
 							EXEC msdb..sp_add_jobserver @job_name = @jobName, @server_name = @serverName;
 							EXEC msdb..sp_start_job @job_name = @jobName
 						END;

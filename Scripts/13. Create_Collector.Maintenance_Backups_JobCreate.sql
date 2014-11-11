@@ -56,16 +56,17 @@ BEGIN TRY;
 								@owner_login_name=N''''sa'''', @job_id = @jobId OUTPUT
 
 						IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-						EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N''''Execution of Maintenance Plan'''', 
+												EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N''''Execution of Maintenance Plan'''', 
 								@step_id=1, 
 								@cmdexec_success_code=0, 
-								@on_success_action=3, 
+								@on_success_action=1, 
 								@on_success_step_id=0, 
 								@on_fail_action=2, 
 								@on_fail_step_id=0, 
 								@retry_attempts=0, 
 								@retry_interval=0, 
-								@os_run_priority=0, @subsystem=N''''TSQL'''', 
+								@os_run_priority=0, 
+								@subsystem=N''''TSQL'''', 
 								@command=N''''use ['' + @DatabaseName +'']
 						go
 						exec [Collector].[usp_Maintenance_Backups_Configure]'''', 
@@ -96,7 +97,6 @@ BEGIN TRY;
 						QuitWithRollback:
 							IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 						EndSave:'';
-
 				EXEC (@SQL);
 END TRY
 BEGIN CATCH
