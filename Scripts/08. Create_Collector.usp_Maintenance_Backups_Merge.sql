@@ -9,7 +9,7 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Collector.usp_Maintenance_Backups_Retrieve';
+	DECLARE @ObjectName varchar(256) = 'Collector.usp_Maintenance_Backups_Merge';
 	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName
 	DECLARE @ReleaseDate datetime = '11/10/2014';
 	DECLARE @DTNow DateTime2 = getdate();
@@ -22,50 +22,85 @@ BEGIN TRY
 			SET @SQL = '
 -- =============================================
 -- Create date: ''' + cast(@ReleaseDate as varchar) + '''
--- Description:	Retrieve backupset info and verify
+-- Description: Merge SP
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
-	@MaintenanceBackupSetId				INT,
-	@Backupfile							VARCHAR(500),
-	@BackupType							VARCHAR(1),
-	@Operationtype						NVARCHAR(50),
-	@ExecutionCommand				    VARCHAR(MAX),
-	@Database_name						SYSNAME
+	@DatabaseName			SYSNAME = NULL,
+	@Jobname				VARCHAR(256)  = NULL,
+	@isJobRunning			Bit  = NULL,
+	@isError				Bit  = NULL,
+	@ErrorMsg				varchar(max)='''',
+	@Filename				varchar(500)='''', 
+	@backup_set_id			INT = 0,
+	@MaintenanceBackupSetId INT  = NULL OUTPUT	
+
 AS
 BEGIN TRY;
 	SET NOCOUNT ON;
 	/******************************** VARIABLES ********************************/
-		DECLARE @backupsetid						INT;
-		DECLARE @ErrorMessage						VARCHAR(1000);
-		DECLARE @VerifyBackupFile					NVARCHAR(4000) = '''';
+		DECLARE @DTNow datetime2=  getdate();
 	/**************************************************************************/
-	
-	-- 1. execution of command
-		EXEC (@ExecutionCommand);
-	
-	-- 2. validate
-		SET @backupsetid = ( SELECT MAX(backup_set_id) FROM msdb..backupset WHERE database_name = @database_name and [type] = @BackupType );	
-		IF @backupsetid IS NULL 
-			BEGIN 
-				SET @ErrorMessage = ''Verify failed. Backup information for database: '' + @database_name + '' not found.'';
-				EXEC Collector.usp_Maintenance_Backups_Merge @MaintenanceBackupSetId = @MaintenanceBackupSetId,  @isError = 1, @ErrorMessage = @ErrorMessage
-				RAISERROR (@ErrorMessage, 16, 1); 
-				RETURN;
-			END
-		ELSE
-			BEGIN
-				SET @VerifyBackupFile = ''RESTORE VERIFYONLY FROM DISK = ''''''++ @Backupfile +''''''  WITH CHECKSUM'';								
-				EXEC SP_EXECUTESQL @VerifyBackupFile;
-				if @@ERROR <>0 
+
+	if @MaintenanceBackupSetId IS NULL -- initial insert
+		BEGIN
+			-- insert INTO [Collector].[t_MaintenanceBackupSet]
+			INSERT INTO [Collector].[t_MaintenanceBackupSet]([Database]) VALUES(@DatabaseName);
+			SET @MaintenanceBackupSetId = SCOPE_IDENTITY();
+
+			-- then into [Collector].[t_MaintenanceBackupHistory]
+			INSERT INTO [Collector].[t_MaintenanceBackupHistory] (MaintenanceBackupSetId, Jobname, ProcessStartDatetime, CreateDatetime)
+			VALUES (@MaintenanceBackupSetId, @Jobname, @DTNow, @DTNow)
+
+		END;
+	ELSE
+		BEGIN
+			-- if isError is flag then update
+			IF ( @isError = ''true'' )
 					BEGIN
-						SET @ErrorMessage = ''Verify failed for file: ''+ @Backupfile +''. Backup information for database: '' + @database_name + '' not found.'';
-						EXEC Collector.usp_Maintenance_Backups_Merge @MaintenanceBackupSetId = @MaintenanceBackupSetId,  @isError = 1, @ErrorMessage = @ErrorMessage
-						RAISERROR (@ErrorMessage, 16, 1);
-						RETURN;
-					END;
-				ELSE
-					EXEC Collector.usp_Maintenance_Backups_Merge @backup_set_id = @backupsetid, @MaintenanceBackupSetId = @MaintenanceBackupSetId, @Filename = @Backupfile
-			END;
+						UPDATE [Collector].[t_MaintenanceBackupHistory] 
+						SET isJobRunning = 0,
+							isError = 1,
+							ErrorMessage = @ErrorMsg,
+							ProcessFinishDatetime = @DTNow
+						WHERE MaintenanceBackupSetId = @MaintenanceBackupSetId;
+					END
+
+			ELSE
+				BEGIN
+					-- update [Collector].[t_MaintenanceBackupSet]
+					UPDATE T
+					SET T.Backup_set_id = S.Backup_set_id,
+						T.name = S.NAME,  
+						T.firstlsn = S.FIRST_LSN, 
+						T.lastlsn = S.LAST_LSN, 
+						T.backupstartdate = S.BACKUP_START_DATE, 
+						T.backupfinishdate = S.BACKUP_FINISH_DATE, 
+						T.sizeinkb = (S.BACKUP_SIZE + 1536) / 1024, 
+						T.[type] = CASE WHEN s.[TYPE] =''D'' THEN ''Full Backup'' WHEN s.[TYPE] =''I'' THEN ''Differential'' WHEN s.[TYPE] =''L'' THEN ''Transactional Log'' ELSE ''Other'' END, 
+						T.[database]= S.DATABASE_NAME, 
+						T.[filename] = @FILENAME, 
+						T.recoverymodel = S.RECOVERY_MODEL, 
+						T.isdamaged = S.IS_DAMAGED,  
+						T.machinenamewherefileresides = S.SERVER_NAME
+					FROM [Collector].[t_MaintenanceBackupSet] T,
+						 MSDB..Backupset S
+					WHERE T.MaintenanceBackupSetId = @MaintenanceBackupSetId AND
+						S.[Backup_set_id] = @backup_set_id
+
+					-- update [Collector].[t_MaintenanceBackupSet]
+					UPDATE [Collector].[t_MaintenanceBackupHistory]
+					SET isJobrunning = 0, 
+						isError = 0, 
+						ErrorMessage = NULL, 
+						ProcessFinishDatetime = @DTNow
+					WHERE MaintenanceBackupSetId = @MaintenanceBackupSetId
+
+				END;
+		END;
+
+Complete:
+	SELECT @MaintenanceBackupSetId;
+
 END TRY
 BEGIN CATCH
 	DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +''.'' + QUOTENAME(object_name(@@PROCID))
@@ -74,7 +109,7 @@ BEGIN CATCH
 													''Error Severity: %i'' + char(13) + 
 													''Error State: %i'' + char(13) + 
 													''Error Number: %i'';
-	SET	@ErrorMessage							= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
+	DECLARE @ErrorMessage		VARCHAR(MAX)	= FORMATMESSAGE(@ErrorMessageFormat, @ProcedureName, ERROR_MESSAGE() , ERROR_SEVERITY() ,ERROR_STATE(), ERROR_NUMBER ());	
 	RAISERROR (@ErrorMessage,16,1);		
 END CATCH;
 ';

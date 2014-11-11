@@ -21,7 +21,7 @@
 		
 -- 2. server instances
 	CREATE TABLE Configuration.t_ServerInstance(
-		ServerInstanceId uniqueidentifier not null default(newid()),
+		ServerInstanceId uniqueidentifier not null default(newsequentialid()),
 		ServerName sysname not null,
 		InstanceName sysname not null,
 		BackupLocation varchar(1000) null,
@@ -42,48 +42,52 @@
 		FullFileName varchar(4000) not null				
 		) 
 
--- 4. Create backupset table	
-	CREATE TABLE Collector.t_Backupset (
-		BackupSetId INT  IDENTITY (1,1)  NOT NULL,
-		Name nvarchar(128) NULL,
-		FirstLsn numeric(25, 0) NULL,
-		LastLsn numeric(25, 0) NULL,
-		BackupStartDate datetime NULL,
-		BackupFinishDate datetime NULL,
-		SizeInKB INT NOT NULL,
-		Type nvarchar(50) NULL,
-		[Database] nvarchar(128) NULL,
-		[FileName] nvarchar(256) NULL,
-		RecoveryModel nvarchar(60) NULL,
-		IsDamaged bit default(0) NOT NULL,
-		RestorationScripts nvarchar(1000) NULL,
-		MachineNameWhereFileResides nvarchar(128) NULL,
-		CreateDatetime datetime2 default(getdate()) not null,
-		CONSTRAINT pk_t_Backupset PRIMARY KEY CLUSTERED 
-			( BackupSetId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+-- 4. Create Collector.t_MaintenanceBackupSet table
+	Create Table Collector.t_MaintenanceBackupSet
+		(
+			MaintenanceBackupSetId INT Identity(1,1) NOT NULL constraint pk_MaintenanceBackupSet PRIMARY KEY,
+			Backup_set_id INT NOT NULL default(0),
+			[Database] SYSNAME NULL,
+			[Name] [varchar](128) NULL,
+			[FirstLsn] [numeric](25, 0) NULL,
+			[LastLsn] [numeric](25, 0) NULL,
+			[BackupStartDate] [datetime] NULL,
+			[BackupFinishDate] [datetime] NULL,
+			[SizeInKB] [int] NULL,
+			[Type] [varchar](50) NULL,
+			[FileName] [varchar](1000) NULL,
+			[RecoveryModel] [nvarchar](60) NULL,
+			[IsDamaged] [bit] NOT NULL DEFAULT ((0)),
+			[MachineNameWhereFileResides] [nvarchar](128) NULL,
+			[CreateDatetime] [datetime2](7) NOT NULL DEFAULT (getdate())
 		) ON [PRIMARY]
 
--- 5. Create backupset Operation table
-	CREATE TABLE Collector.t_BackupsetOperation (
-		BackupsetOperationId int IDENTITY(1,1) NOT NULL,
-		[Database] nvarchar(128) NULL,
-		OperationType nvarchar(50) NOT NULL,
-		OperationStatus nvarchar(30) NOT NULL,
-		Comments nvarchar(4000) NULL,
-		CreateDatetime datetime2(7) NOT NULL DEFAULT(getdate()),
-		CONSTRAINT pk_t_BackupsetOperation PRIMARY KEY CLUSTERED 
-		( BackupsetOperationId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+-- 5. Create MaintenanceBackupHistory table
+	Create Table Collector.t_MaintenanceBackupHistory
+		(
+		MaintenanceBackupHistoryId INT Identity(1,1) NOT NULL constraint pk_MaintenanceBackupHistory PRIMARY KEY,
+		MaintenanceBackupSetId INT NOT NULL constraint fk_MaintenanceBackupSet_MaintenanceBackupSetId FOREIGN KEY references Collector.t_MaintenanceBackupSet(MaintenanceBackupSetId),
+		JobName VARCHAR(256) NULL,
+		isJobrunning BIT NOT NULL Default(1),
+		isError BIT NOT NULL Default(0),
+		ErrorMessage varchar(8000) NULL,
+		ProcessStartDatetime datetime2 not null default(getdate()),
+		ProcessFinishDatetime datetime2 not null default('12/31/2999'),
+		CreateDatetime datetime2 not null default(getdate())
 		) ON [PRIMARY]
 
 -- 6. Create backupset restore script table
-	CREATE TABLE Collector.t_BackupsetRestoreScripts (
-		BackupsetRestoreScriptsId INT  IDENTITY (1,1) NOT NULL,
-		[Database] nvarchar(128) NULL,
-		[FileName] nvarchar(256) NULL,
-		CreateDatetime datetime2 default(getdate()) not null,	
-		CONSTRAINT pk_t_BackupsetRestoreScripts PRIMARY KEY CLUSTERED 
-		( BackupsetRestoreScriptsId ASC )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-		) ON [PRIMARY]
+	Create table Configuration.t_BackupManagement
+	(
+	BackupManagementId INT Identity(1,1) NOT NULL,
+	ProcessType varchar(100) NOT NULL  constraint pk_BackupManagement PRIMARY KEY,
+	Period INT NOT NULL DEFAULT(0),
+	Interval varchar(10) NOT NULL DEFAULT('n/a'),
+	isActive BIT NOT NULL DEFAULT(1)
+	) ON [Configure]
+	-- give default vale
+	INSERT INTO Configuration.t_BackupManagement ( ProcessType, Period, Interval )
+	Values('Full Backup', 24, 'Hours'),('Differential Backup', 4, 'Hours'),('Transaction Log', 1, 'Hours'),('Deletion', 4, 'n/a')
 
 -- 7. Create SQL Server job history
 	CREATE TABLE Reporting.t_FailedSQLJobsHistory(
@@ -113,19 +117,18 @@
 	) ON [Configure]
 
 -- 9. Create Reporting.SqlCurrentJobsReults table type
-	CREATE TYPE REPORTING.UDTT_SQLCURRENTJOBRESULTS AS TABLE (
-			JOB_ID UNIQUEIDENTIFIER NOT NULL, 
-			LAST_RUN_DATE INT NOT NULL, 
-			LAST_RUN_TIME INT NOT NULL, 
-			NEXT_RUN_DATE INT NOT NULL, 
-			NEXT_RUN_TIME INT NOT NULL, 
-			NEXT_RUN_SCHEDULE_ID INT NOT NULL, 
-			REQUESTED_TO_RUN INT NOT NULL, /* BOOL*/ 
-			REQUEST_SOURCE INT NOT NULL, 
-			REQUEST_SOURCE_ID SYSNAME COLLATE DATABASE_DEFAULT NULL, 
-			RUNNING INT NOT NULL, /* BOOL*/ 
-			CURRENT_STEP INT NOT NULL, 
-			CURRENT_RETRY_ATTEMPT INT NOT NULL, 
-			JOB_STATE INT NOT NULL
+	CREATE TYPE Reporting.udtt_SqlCurrentJobResults AS TABLE (
+			Job_id uniqueidentifier not null, 
+			Last_run_date int not null, 
+			Last_run_time int not null, 
+			Next_run_date int not null, 
+			Next_run_time int not null, 
+			Next_run_schedule_id int not null, 
+			Requested_to_run int not null, /* bool*/ 
+			Request_source int not null, 
+			Request_source_id sysname collate database_default null, 
+			Running int not null, /* bool*/ 
+			Current_step int not null, 
+			Current_retry_attempt int not null, 
+			Job_state int not null
 			); 
-

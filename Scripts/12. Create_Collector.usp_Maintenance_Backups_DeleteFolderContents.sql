@@ -11,7 +11,7 @@ GO
 	DECLARE @Author varchar(256)= 'justin_samuel';
 	DECLARE @ObjectName varchar(256) = 'Collector.usp_Maintenance_Backups_DeleteFolderContents';
 	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName;
-	DECLARE @ReleaseDate datetime = '10/1/2013';
+	DECLARE @ReleaseDate datetime = '11/1/2014';
 	DECLARE @DTNow DateTime2 = getdate();
 /***************************************************************/
 BEGIN TRY
@@ -21,24 +21,27 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 3/1/2013
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	Delete backup files   
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
-	@DaysToRetain INT = 4 -- how many days back to start deletion (default is to keep 4 days).
+	( @CustomRemoval INT = NULL )
 AS
 BEGIN
-	SET NOCOUNT ON; 	
-	DECLARE @DateToRemove				DateTime =  DATEADD(DAY, DATEDIFF(DAY, 0 , GETDATE()) - @DaysToRetain,0 ); -- actual date
+	SET NOCOUNT ON; 
+
+	DECLARE @DeletionPeriod				INT = ( SELECT ISNULL(@CustomRemoval, ( SELECT Period FROM [Configuration].[t_BackupManagement] (nolock) WHERE ProcessType = ''Deletion'' )));
+	DECLARE @DateToRemove				DateTime =  DATEADD(DAY, DATEDIFF(DAY, 0 , GETDATE()) - @DeletionPeriod,0 ); -- actual date
 	DECLARE @Backupfolderlocation		VARCHAR(100) = [Configuration].[svfn_DefaultFolderLocation_Get](''BackupDirectory''); -- backupfolder local
-	DECLARE @SQL						NVARCHAR(4000) = ''FORFILES /p '' + @Backupfolderlocation + '' /s /m *.* /d -'' + cast(@DaysToRetain as varchar(5)) + '' /c "CMD /C del /Q /F @FILE"'';
-	
+	DECLARE @SQL						NVARCHAR(4000) = CASE 
+															WHEN @DeletionPeriod > 0 THEN ''FORFILES /p '' + @Backupfolderlocation + '' /s /m *.* /d -'' + cast(@DeletionPeriod as varchar(5)) + '' /c "CMD /C del /Q /F @FILE"''
+															ELSE ''FORFILES /p '' + @Backupfolderlocation + '' /s /m *.* /d -0 /c "CMD /C del /Q /F @FILE"''
+														  END;
 	EXEC xp_cmdshell @SQL;
 				
 	-- Delete from Backupset tables / msdb backupset
-	DELETE FROM [Collector].[t_Backupset] WHERE DATEADD(DAY, DATEDIFF(DAY, 0 , CreateDatetime),0 ) <= @DateToRemove;
-	DELETE FROM [Collector].[t_BackupsetOperation] WHERE DATEADD(DAY, DATEDIFF(DAY, 0 , CreateDatetime),0 ) <= @DateToRemove;
-	DELETE FROM [Collector].[t_BackupsetRestoreScripts] WHERE DATEADD(DAY, DATEDIFF(DAY, 0 , CreateDatetime),0 ) <= @DateToRemove;
+	DELETE FROM [Collector].[t_MaintenanceBackupHistory] WHERE DATEADD(DAY, DATEDIFF(DAY, 0 , CreateDatetime),0 ) <= @DateToRemove;
+	DELETE FROM [Collector].[t_MaintenanceBackupSet] WHERE DATEADD(DAY, DATEDIFF(DAY, 0 , CreateDatetime),0 ) <= @DateToRemove;
 		
 	EXEC MSDB..SP_DELETE_BACKUPHISTORY @DateToRemove;
 END		

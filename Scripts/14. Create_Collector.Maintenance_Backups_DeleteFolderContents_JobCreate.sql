@@ -22,7 +22,7 @@ BEGIN TRY
 -- 2. Create of object	
 			SET @SQL = '
 -- =============================================
--- Create date: 3/1/2013
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	SP that will create job to delete folder contents
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '

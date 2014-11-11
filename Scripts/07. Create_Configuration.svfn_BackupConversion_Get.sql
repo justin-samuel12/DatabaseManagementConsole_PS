@@ -9,9 +9,9 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Configuration.svfn_DefaultFolderLocation_Get';
+	DECLARE @ObjectName varchar(256) = 'Configuration.svfn_BackupConversion_Get';
 	DECLARE @Description VARCHAR(100)='Creation of function: '+ @ObjectName
-	DECLARE @ReleaseDate datetime = '10/1/2013';
+	DECLARE @ReleaseDate datetime = '11/10/2013';
 	DECLARE @DTNow DateTime2 = getdate();
 /***************************************************************/
 BEGIN TRY
@@ -22,42 +22,27 @@ BEGIN TRY
 			SET @SQL = '
 -- =============================================
 -- Create date: ''' + cast(@ReleaseDate as varchar) + '''
--- Description:	Backup SQL Default file location function
+-- Description:	Covert backup period and interval for backup configuration
 -- =============================================
 CREATE FUNCTION ' + @ObjectName + '
 ( 
-	@Type varchar(100) --BackupDirectory/ DefaultData / DefaultLog 
+  @Period INT, 
+  @Interval varchar(10)	
 )
-RETURNS VARCHAR(100)
+RETURNS INT
 AS
 BEGIN
-	DECLARE @InstanceName nvarchar(50)= CONVERT(NVARCHAR,isnull(SERVERPROPERTY(''INSTANCENAME''), ''MSSQLSERVER''));
-	DECLARE @RegKey_Value VARCHAR(100)
-	DECLARE @RegKey_InstanceName nvarchar(500)
-	DECLARE @RegKey nvarchar(500)
-	DECLARE @Value VARCHAR(100)
+	
+	DECLARE @IntervalPeriod INT = @Period *
+		CASE WHEN @Interval like ''Week%'' THEN 7*24*60*60
+			WHEN @Interval like ''Day%'' THEN 24*60*60
+			WHEN @Interval like ''Hour%'' THEN 60*60
+			WHEN @Interval like ''Minute%'' THEN 60
+			ELSE 1 
+		 END;
 
-	IF ( SELECT Convert(varchar(1),(SERVERPROPERTY(''ProductVersion''))) ) <> 8
-		BEGIN
-			-- first get the named instance
-			SET @RegKey_InstanceName=''SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL''
- 
-			-- then get the registry key
-			EXECUTE xp_regread @rootkey = ''HKEY_LOCAL_MACHINE'', @key = @RegKey_InstanceName, @value_name = @InstanceName, @value = @RegKey_Value OUTPUT
-			SET @RegKey=''SOFTWARE\Microsoft\Microsoft SQL Server\''+ @RegKey_Value +''\MSSQLServer\''
-     
-			-- get the default location per type value
-			EXEC master..xp_regread 
-				@rootkey=''HKEY_LOCAL_MACHINE'',
-				@key=@RegKey,
-				@value_name=@type,
-				@value = @value OUTPUT
+	RETURN @IntervalPeriod
 
-			-- final validation
-			IF (( right(ltrim(rtrim(@Value)),1) ) <>''\'' ) set @Value += ''\'';			
-		END
-
-		RETURN @Value;
 END
 ';
 	 

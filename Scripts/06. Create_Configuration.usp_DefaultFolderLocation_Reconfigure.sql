@@ -21,7 +21,7 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 10/02/2014
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	Reconfigure Default Location for server
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '

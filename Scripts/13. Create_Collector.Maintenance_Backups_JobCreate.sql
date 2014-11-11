@@ -21,7 +21,7 @@ BEGIN TRY
 	-- 1. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 3/1/2013
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	SP that will create job that will execute the backup process
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
@@ -68,24 +68,7 @@ BEGIN TRY;
 								@os_run_priority=0, @subsystem=N''''TSQL'''', 
 								@command=N''''use ['' + @DatabaseName +'']
 						go
-						exec [Collector].[usp_Maintenance_Backups_Retrieve]'''', 
-								@database_name=N''''master'''', 
-								@flags=0
-						IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-						/****** Object:  Step [Create Restore Scripts]    Script Date: 10/22/2013 3:41:53 PM ******/
-						EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N''''Create Restore Scripts'''', 
-								@step_id=2, 
-								@cmdexec_success_code=0, 
-								@on_success_action=1, 
-								@on_success_step_id=0, 
-								@on_fail_action=2, 
-								@on_fail_step_id=0, 
-								@retry_attempts=0, 
-								@retry_interval=0, 
-								@os_run_priority=0, @subsystem=N''''TSQL'''', 
-								@command=N''''use ['' + @DatabaseName +'']
-						go
-						exec [Collector].[usp_Maintenance_Backups_CreateRestoreScripts]'''', 
+						exec [Collector].[usp_Maintenance_Backups_Configure]'''', 
 								@database_name=N''''master'''', 
 								@flags=0
 						IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
