@@ -31,8 +31,6 @@ GO
 /***************************************************************/
 
 BEGIN TRY
-
-	-- 1. Drop Objects
 		SET @FileName = 'Dropping Objects'
 		SELECT @the_script = REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -43,7 +41,6 @@ BEGIN TRY
 
 		EXEC (@the_script);
 	
-	-- 2. Create tables
 		SET @FileName = 'Creating Tables'
 		SELECT @the_script = REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -53,8 +50,17 @@ BEGIN TRY
 		) Execution
 
 		EXEC (@the_script);
-		
-	-- 3. Create Version Control Merge SP 
+
+		SET @FileName = 'Creating Maintenance backup view'
+		SELECT @the_script = REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
+		FROM OPENROWSET
+		(
+			BULK  '$(Working_Directory)\Objects\14. Create_v_MaintenanceBackup.txt',
+			SINGLE_CLOB 
+		) Execution
+
+		EXEC (@the_script);
+
 		SET @FileName = 'Creating Version Control Merge SP'
 		SELECT @the_script =REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -65,14 +71,12 @@ BEGIN TRY
 
 		EXEC (@the_script);
 
-	-- 3a. Backfilling the previous file
 		SET @FileName = 'Backfill'
 		EXEC Configuration.usp_VersionControl_Merge @VersionNumber = @VersionNumber, @ScriptName = '01. Server_Configuration.sql', @Author = @Author, @ObjectName ='Database', @Option = @Option, @Description = @Description, @ReleaseDate = @ReleaseDate, @isError = 0, @ErrorMsg = NULL
 		EXEC Configuration.usp_VersionControl_Merge @VersionNumber = @VersionNumber, @ScriptName = '02. Create_SQL_profile_mail.sql', @Author = @Author, @ObjectName ='Database', @Option = @Option, @Description = @Description, @ReleaseDate = @ReleaseDate, @isError = 0, @ErrorMsg = NULL
 		EXEC Configuration.usp_VersionControl_Merge @VersionNumber = @VersionNumber, @ScriptName = '03. Create_Database.sql', @Author = @Author, @ObjectName ='Database', @Option = @Option, @Description = @Description, @ReleaseDate = @ReleaseDate, @isError = 0, @ErrorMsg = NULL
 	
 		
-	-- 4. Creating Version Control Get List SP 
 		SET @FileName = 'Creating Version Control Get List SP'
 		SELECT @the_script =REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -83,7 +87,6 @@ BEGIN TRY
 
 		EXEC (@the_script);
 
-	-- 5. Create Schema DDL 
 		SET @FileName = 'Creating Schema DDL Trigger'
 		SELECT @the_script =REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -94,7 +97,6 @@ BEGIN TRY
 
 		EXEC (@the_script);
 
-	-- 6. Create Email Notification
 		SET @FileName = 'Creating Email Notification'
 		SELECT @the_script =REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -105,7 +107,6 @@ BEGIN TRY
 
 		EXEC (@the_script);
 
-	-- 7. Create Server Instance
 		SET @FileName = 'Creating Server Instance'
 		SELECT @the_script =REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -116,7 +117,6 @@ BEGIN TRY
 
 		EXEC (@the_script);
 
-	-- 8. Create Server Instance Linkserver
 		SET @FileName = 'Creating Server Instance Linkserver'
 		SELECT @the_script =REPLACE(REPLACE(REPLACE(Execution.BulkColumn,'ï»¿',''),'<Configuration_File>','$(Configuration_File)'),'<Database_Name>','$(Database_Name)')
 		FROM OPENROWSET
@@ -127,12 +127,10 @@ BEGIN TRY
 
 		EXEC (@the_script);
 	
-	-- 09. Configure Server Instance
-	-- 09a. Get XML information
+	/********************************************************************/
 		SELECT @Xml = CAST(BulkColumn AS XML)
 		FROM OPENROWSET (BULK '$(Configuration_File)', SINGLE_BLOB) AS DATA;
 	
-	-- 09b. Declare Cursor for users
 		SET @Cur = CURSOR FOR 
 			SELECT
 				t.c.value('@Server','NVARCHAR(256)') ,
@@ -146,38 +144,27 @@ BEGIN TRY
 				t.c.value('@Backuplocation','NVARCHAR(1000)')
 			FROM @xml.nodes('/Root/InstancesConfiguration/SecondaryInstances/Instances/Database') AS T(c)
 
-	-- 09c. Open Cursor
 		OPEN @Cur
-		
-	-- 09d. Fetch
 		FETCH NEXT FROM @Cur INTO @ServerName, @InstanceName, @Backuplocation
 
-	-- 09e. Start loop
 		WHILE @@FETCH_STATUS = 0
 		BEGIN
 			EXEC [Configuration].[usp_ServerInstance_Insert] @ServerName, @InstanceName, @Backuplocation;
 			FETCH NEXT FROM @Cur INTO @ServerName, @InstanceName, @Backuplocation
 		END
 
-	-- 09f. Cleanup
 		CLOSE @Cur;
 		DEALLOCATE @Cur;	
 			
-
-	-- 09g. Declare Cursor for DBAdminEmails
 		SET @Cur = CURSOR FOR 
 			SELECT
 				t.c.value('@User','NVARCHAR(500)') ,
 				t.c.value('@Address','NVARCHAR(500)') 
 			FROM @xml.nodes('/Root/MiscConfiguration/DBAdminEmails/Email') AS T(c)			
 
-	-- 09h. Open Cursor
 		OPEN @Cur
-		
-	-- 09i. Fetch
 		FETCH NEXT FROM @Cur INTO @user, @email
 
-	-- 09j. Start loop
 		WHILE @@FETCH_STATUS = 0
 		BEGIN
 			
@@ -187,12 +174,9 @@ BEGIN TRY
 			FETCH NEXT FROM @Cur INTO @user, @email
 		END
 
-	-- 09k. Cleanup
 		CLOSE @Cur;
 		DEALLOCATE @Cur;	
 			
-
-	-- 10. Finally execute [Config].[usp_VersionControl_Merge] to fill in
 		SET @FileName = 'Insert into Version Control'
 		EXEC Configuration.usp_VersionControl_Merge @VersionNumber = @VersionNumber, @ScriptName = '$(File_Name)', @Author = @Author, @ObjectName ='Database', @Option = @Option, @Description = @Description, @ReleaseDate = @ReleaseDate, @isError = 0, @ErrorMsg = NULL
 

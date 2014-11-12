@@ -76,19 +76,6 @@
 		CreateDatetime datetime2 not null default(getdate())
 		) ON [PRIMARY]
 
--- 6. Create backupset restore script table
-	Create table Configuration.t_BackupManagement
-	(
-	BackupManagementId INT Identity(1,1) NOT NULL,
-	ProcessType varchar(100) NOT NULL  constraint pk_BackupManagement PRIMARY KEY,
-	Period INT NOT NULL DEFAULT(0),
-	Interval varchar(10) NOT NULL DEFAULT('n/a'),
-	isActive BIT NOT NULL DEFAULT(1)
-	) ON [Configure]
-	-- give default vale
-	INSERT INTO Configuration.t_BackupManagement ( ProcessType, Period, Interval )
-	Values('Full Backup', 24, 'Hours'),('Differential Backup', 4, 'Hours'),('Transaction Log', 1, 'Hours'),('Deletion', 4, 'n/a')
-
 -- 7. Create SQL Server job history
 	CREATE TABLE Reporting.t_FailedSQLJobsHistory(
 		Instanceid int NOT NULL,

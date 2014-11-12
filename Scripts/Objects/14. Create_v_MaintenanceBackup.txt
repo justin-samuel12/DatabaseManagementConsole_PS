@@ -1,0 +1,27 @@
+﻿
+CREATE View [Collector].[v_MaintenanceBackup] AS
+(
+SELECT mbh.MaintenanceBackupHistoryId, 
+		mbh.MaintenanceBackupSetId, 
+		mbs.Backup_set_id, 
+		mbs.[Database], 
+		mbs.Name, 
+		mbs.FirstLsn, 
+		mbs.LastLsn, 
+		mbs.BackupStartDate, 
+		mbs.BackupFinishDate, 
+		mbs.SizeInKB, 
+		mbs.[Type], 
+		mbs.[FileName], 
+		mbs.RecoveryModel, 
+		mbs.IsDamaged, 
+		mbs.MachineNameWhereFileResides,
+		mbh.JobName, 
+		mbh.isJobrunning,
+		mbh.isError, 
+		mbh.ErrorMessage, 
+		mbh.ProcessStartDatetime, 
+		mbh.ProcessFinishDatetime, 
+		mbh.CreateDatetime
+FROM [Collector].[t_MaintenanceBackupHistory] mbh (nolock)
+	inner join [Collector].[t_MaintenanceBackupSet] mbs (nolock) on mbh.[MaintenanceBackupSetId] = mbs.[MaintenanceBackupSetId])

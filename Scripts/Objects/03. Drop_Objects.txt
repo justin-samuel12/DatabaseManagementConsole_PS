@@ -9,10 +9,10 @@ if OBJECT_ID('Configuration.t_ServerInstance') IS NOT NULL begin drop table Conf
 IF OBJECT_ID('Configuration.t_Databases') IS NOT NULL begin drop table Configuration.t_Databases end
 IF OBJECT_ID('Configuration.t_ServerInstance') IS NOT NULL begin drop table Configuration.t_ServerInstance end
 IF OBJECT_ID('Configuration.t_AlertEmail') IS NOT NULL BEGIN DROP TABLE Configuration.t_AlertEmail END
-IF OBJECT_ID('Configuration.t_BackupManagement') IS NOT NULL BEGIN DROP TABLE Configuration.t_BackupManagement END
 
 if object_id('Collector.t_MaintenanceBackupSet') is not null BEGIN drop table Collector.t_MaintenanceBackupSet END
 if object_id('Collector.t_MaintenanceBackupHistory') is not null BEGIN  drop table Collector.t_MaintenanceBackupHistory END
+IF OBJECT_ID('Collector.v_MaintenanceBackup') IS NOT NULL BEGIN DROP VIEW Collector.v_MaintenanceBackup END
 
 IF OBJECT_ID('Reporting.t_FailedSQLJobsHistory') IS NOT NULL BEGIN DROP TABLE Reporting.t_FailedSQLJobsHistory END
 

@@ -21,7 +21,7 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 10/31/2014
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	Get all current sql jobs per instance
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '

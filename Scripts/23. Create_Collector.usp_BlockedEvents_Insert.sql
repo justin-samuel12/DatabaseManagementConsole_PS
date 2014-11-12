@@ -21,7 +21,7 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 11/29/2013
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	Insert into Monitor.t_BlockedEvents 
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '

@@ -10,7 +10,7 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Configuration.usp_Maintenance_Backups_Reset';
+	DECLARE @ObjectName varchar(256) = 'Collector.usp_Maintenance_Backups_Reset';
 	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName
 	DECLARE @ReleaseDate datetime = '10/1/2013';
 	DECLARE @DTNow DateTime2 = getdate();
@@ -22,7 +22,7 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 10/6/2014
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description: resetting all the backup tables and removing all backup items on server 
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
@@ -30,9 +30,9 @@ AS
 BEGIN TRY;
 	EXEC [Collector].[usp_Maintenance_Backups_DeleteFolderContents] -1
 
-	truncate table [Collector].[t_Backupset]
-	truncate table [Collector].[t_BackupsetOperation]
-	truncate table [Collector].[t_BackupsetRestoreScripts]
+	truncate table [Collector].[t_MaintenanceBackupHistory];
+	delete from [Collector].[t_MaintenanceBackupSet];
+	dbcc checkident (''collector.t_MaintenanceBackupSet'', reseed, 0)
 	
 	-- execution on backup job
 	exec msdb..sp_start_job ''DatabaseManagementConsole.Collector.Maintenance_Backups'';

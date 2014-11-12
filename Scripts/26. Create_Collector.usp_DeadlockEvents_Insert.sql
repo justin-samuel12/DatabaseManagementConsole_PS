@@ -1,6 +1,5 @@
 SET ANSI_NULLS, ANSI_PADDING, ANSI_WARNINGS, ARITHABORT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER ON;
 SET NUMERIC_ROUNDABORT OFF;
-
 GO
 USE [$(Database_Name)]
 GO
@@ -10,7 +9,7 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Configuration.usp_AlertEmail_Get';
+	DECLARE @ObjectName varchar(256) = 'Collector.usp_DeadlockEvents_Insert';
 	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName
 	DECLARE @ReleaseDate datetime = '10/1/2013';
 	DECLARE @DTNow DateTime2 = getdate();
@@ -22,29 +21,33 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 5/8/2013
--- Description: Retrieve the email address 
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
+-- Description:	Insert into Monitor.t_DeadlockEvents_Insert
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
-	@EmailAddress NVARCHAR(MAX) OUTPUT 
+	@Deadlockxml XML
 AS
+/*************************** VARIABLES **********************************/
+	DECLARE @MessageSubject VARCHAR(100)  = ''Alert! DeadLock Occured On '' + @@servername + ''\'' + @@servicename;
+	DECLARE @MessageBody VARCHAR(max)='''';
+	DECLARE @recipients varchar(max)= ''''
+	DECLARE @Id INT;
+/*************************************************************************/
 BEGIN TRY;
-	SET NOCOUNT ON;
-		;with _cte as (
-		SELECT 
-			STUFF(
-				(
-					SELECT ''; '' + lower(EmailAddress)
-					FROM [Configuration].[t_AlertEmail]
-					WHERE isActive = 1
-					FOR XML PATH ('''')
-				),1,2,'''') AS EmailAddress
-		FROM [Configuration].[t_AlertEmail] Audience WITH (NOLOCK) )
+	-- Inserting into a table for further reference
+		INSERT INTO [Collector].[t_DeadlockEvents] (DeadlockGraph, AlertDateTime)
+		VALUES (@Deadlockxml, getdate())
 
-		SELECT @EmailAddress = EmailAddress from _Cte group by EmailAddress;
-		
-		RETURN;	
+	-- Create body	/ email list
+		EXEC [Configuration].[usp_AlertEmail_Get] @recipients OUTPUT; -- get email
+		Set @MessageBody = convert(nvarchar(max),@Deadlockxml);
+		Set @MessageBody = ''--Note: Save this output as .xdl file and open in SSMS to view graphically and remove this line.'' + @MessageBody
+		select @MessageBody = replace (replace (@MessageBody,''&#x0A;'',''''),''&#x20;'','''')
 
+
+	--Sending Mail
+		EXEC [Configuration].[usp_EmailNotification] @subject = @MessageSubject, @body = @MessageBody, @recipients = @recipients;
+			
 END TRY
 BEGIN CATCH
 	DECLARE @ProcedureName		SYSNAME			= QUOTENAME(OBJECT_SCHEMA_NAME(@@PROCID)) +''.'' + QUOTENAME(object_name(@@PROCID))
@@ -57,9 +60,9 @@ BEGIN CATCH
 	RAISERROR (@ErrorMessage,16,1);	
 END CATCH;
 ';
-	 
+ 
 	 --PRINT @SQL
-	 EXEC (@SQL)
+	 EXEC (@SQL);
 	 
 	 -- 3. insert into [Config].[t_VersionControl]
 	 EXEC Configuration.usp_VersionControl_Merge @VersionNumber = @VersionNumber, @ScriptName = '$(File_Name)', @Author = @Author, 
@@ -77,4 +80,3 @@ BEGIN CATCH
 		IF OBJECT_ID('Config.usp_VersionControl_Merge') IS NOT NULL EXEC Configuration.usp_VersionControl_Merge @VersionNumber = @VersionNumber, @ScriptName = '$(File_Name)', @Author = @Author, @ObjectName = @ObjectName, @Option = @Option, @Description = @Description, @ReleaseDate = @ReleaseDate, @isError = 1, @ErrorMsg = @ErrorMessage;
 		RAISERROR (@ErrorMessage,16,1) WITH LOG;
 END CATCH;
-GO

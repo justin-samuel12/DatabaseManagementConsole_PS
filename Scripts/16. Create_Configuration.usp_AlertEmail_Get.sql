@@ -10,9 +10,9 @@ GO
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Reporting.usp_SQLServiceStoppedStatus_Get';
-	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName;
-	DECLARE @ReleaseDate datetime = '10/1/2013';
+	DECLARE @ObjectName varchar(256) = 'Configuration.usp_AlertEmail_Get';
+	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName
+	DECLARE @ReleaseDate datetime = '06/03/2014';
 	DECLARE @DTNow DateTime2 = getdate();
 /***************************************************************/
 BEGIN TRY
@@ -22,72 +22,28 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 09/25/2014
--- Description: Get all sql stopped services
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
+-- Description: Retrieve the email address 
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
+	@EmailAddress NVARCHAR(MAX) OUTPUT 
 AS
 BEGIN TRY;
-/********************* VARIABLES *******************************/
-	DECLARE @DTNow DateTime2 = getdate();
-	DECLARE @SQLTable TABLE (Status varchar(256), Service varchar(256), DisplayName varchar(256))
-	DECLARE @xml NVARCHAR(MAX);
-	DECLARE @body NVARCHAR(MAX)='''';
-	DECLARE @subject VARCHAR(256) = ''SQL Service Stopped for: '' + @@SERVERNAME;
-	DECLARE @receipants varchar(max);
-/***************************************************************/
 	SET NOCOUNT ON;
-		-- drop if exists then create
-		if object_id(''tempdb..#statusTable'') is not null begin drop table #statustable end;
-		create table #statusTable (rowId int primary key identity(1,1), value varchar(4000));
+		;with _cte as (
+		SELECT 
+			STUFF(
+				(
+					SELECT ''; '' + lower(EmailAddress)
+					FROM [Configuration].[t_AlertEmail]
+					WHERE isActive = 1
+					FOR XML PATH ('''')
+				),1,2,'''') AS EmailAddress
+		FROM [Configuration].[t_AlertEmail] Audience WITH (NOLOCK) )
 
-	-- insert into temp table	
-		declare @getstatusCmd varchar(256) = ''"Get-Service -name *sql* | Format-Table -AutoSize -Property Name, Status, Displayname"'';
-		set @getstatusCmd = ''powershell.exe -noprofile -command '' + @getstatusCmd
-
-		INSERT #STATUSTABLE
-		EXEC XP_CMDSHELL @GETSTATUSCMD; 
-
-		;with _cte as
-		(
-		SELECT [Status],
-			   Name, 
-			   ServiceName
-		FROM #statusTable 
-			CROSS APPLY (SELECT SUBSTRING(LTRIM(RTRIM(value)),1, CHARINDEX('' '',LTRIM(RTRIM(value))) -1) Name) A 
-			CROSS APPLY (SELECT SUBSTRING(LTRIM(RTRIM(REPLACE(value, A.Name, ''''))),1, CHARINDEX('' '',LTRIM(RTRIM(REPLACE(value, A.Name,'''')))) -1) as [Status]) B
-			CROSS APPLY (SELECT LTRIM(RTRIM(REPLACE(REPLACE(value, B.[Status], ''''),A.Name,''''))) as ServiceName) C 
-		where value is not null and rowId >3
-		)
-
-		INSERT @SQLTable
-		SELECT * FROM _CTE WHERE [STATUS] <>''RUNNING'' AND ( NAME LIKE ''SQLAGENT%'' OR NAME LIKE ''MSSQL%'' )
-
-		IF @@ROWCOUNT > 0
-		begin
+		SELECT @EmailAddress = EmailAddress from _Cte group by EmailAddress;
 		
-			EXEC [Configuration].[usp_AlertEmail_Get] @receipants OUTPUT; -- get email
-		
-			SET @xml = CAST(( SELECT Status AS ''td'','''', 
-									 Service AS ''td'','''', 
-									 DisplayName  AS ''td''
-			FROM  @SQLTable 
-			ORDER BY Service 
-			FOR XML PATH(''tr''), ELEMENTS ) AS NVARCHAR(MAX));
-
-
-			SET @body =''<html>Please see below for SQL services that are not running executed on: '' + cast( @DTNow as varchar )+ ''</br></br>
-						<table border = 1> 
-						<tr valign=top>
-						<th> Status </th> 
-						<th> Service </th>
-						<th> DisplayName </th>
-						</tr>'';    
-
-			SET @body = @body + REPLACE(@xml,''<tr>'',''<tr valign=top>'') +''</table></body></html>'';
-			EXEC [Configuration].[usp_EmailNotification] ''Database'',@Subject, @body, @receipants;
-
-		end
+		RETURN;	
 
 END TRY
 BEGIN CATCH
@@ -101,7 +57,8 @@ BEGIN CATCH
 	RAISERROR (@ErrorMessage,16,1);	
 END CATCH;
 ';
-	--PRINT @SQL
+	 
+	 --PRINT @SQL
 	 EXEC (@SQL)
 	 
 	 -- 3. insert into [Config].[t_VersionControl]

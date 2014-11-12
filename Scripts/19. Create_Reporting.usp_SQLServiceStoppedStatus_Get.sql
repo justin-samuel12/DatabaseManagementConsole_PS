@@ -5,13 +5,12 @@ GO
 USE [$(Database_Name)]
 GO
 /********************* VARIABLES *******************************/
-	DECLARE @CreateDate DateTime2 = getdate();
 	DECLARE @SQL VARCHAR(MAX) ='';
 
 	DECLARE @VersionNumber numeric(3,2) ='1.0';
 	DECLARE @Option varchar(256)= 'New';
 	DECLARE @Author varchar(256)= 'justin_samuel';
-	DECLARE @ObjectName varchar(256) = 'Reporting.usp_FailedSQLJobsHistory_Insert';
+	DECLARE @ObjectName varchar(256) = 'Reporting.usp_SQLServiceStoppedStatus_Get';
 	DECLARE @Description VARCHAR(100)='Creation of stored procedure: '+ @ObjectName;
 	DECLARE @ReleaseDate datetime = '10/1/2013';
 	DECLARE @DTNow DateTime2 = getdate();
@@ -23,64 +22,71 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 5/8/2013
--- Description: Insert into [Reports].[t_FailedSQLJobsHistory]
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
+-- Description: Get all sql stopped services
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
 AS
 BEGIN TRY;
 /********************* VARIABLES *******************************/
 	DECLARE @DTNow DateTime2 = getdate();
-	DECLARE @SQLTable TABLE (Instanceid int,JobId uniqueidentifier,JobName sysname,StepName sysname, RunStatus varchar(11),
-							 SqlMessageId int,SqlSeverity int,Message nvarchar(4000),ExecutionDatetime datetime2,
-							  RunDuration int, Server sysname ,CreateDatetime datetime2)
+	DECLARE @SQLTable TABLE (Status varchar(256), Service varchar(256), DisplayName varchar(256))
 	DECLARE @xml NVARCHAR(MAX);
 	DECLARE @body NVARCHAR(MAX)='''';
-	DECLARE @subject VARCHAR(256) = ''SQL Failed Jobs for: '' + @@SERVERNAME;
+	DECLARE @subject VARCHAR(256) = ''SQL Service Stopped for: '' + @@SERVERNAME;
 	DECLARE @receipants varchar(max);
 /***************************************************************/
 	SET NOCOUNT ON;
-	
-	-- insert into table variable
-	insert @SQLTable
-	SELECT instance_id, job_id, Job_Name, Step_name, Run_status, Sql_message_id, Sql_severity, [message], exec_date, run_duration, [server],@DTNow
-	FROM [Collector].[v_FailedSQLJobs] with(nolock)
-	WHERE instance_id NOT IN ( SELECT instanceid FROM [Reporting].[t_FailedSQLJobsHistory] WHERE [Server] = @@SERVERNAME )			
+		-- drop if exists then create
+		if object_id(''tempdb..#statusTable'') is not null begin drop table #statustable end;
+		create table #statusTable (rowId int primary key identity(1,1), value varchar(4000));
 
-	IF @@ROWCOUNT > 0
+	-- insert into temp table	
+		declare @getstatusCmd varchar(256) = ''"Get-Service -name *sql* | Format-Table -AutoSize -Property Name, Status, Displayname"'';
+		set @getstatusCmd = ''powershell.exe -noprofile -command '' + @getstatusCmd
+
+		INSERT #STATUSTABLE
+		EXEC XP_CMDSHELL @GETSTATUSCMD; 
+
+		;with _cte as
+		(
+		SELECT [Status],
+			   Name, 
+			   ServiceName
+		FROM #statusTable 
+			CROSS APPLY (SELECT SUBSTRING(LTRIM(RTRIM(value)),1, CHARINDEX('' '',LTRIM(RTRIM(value))) -1) Name) A 
+			CROSS APPLY (SELECT SUBSTRING(LTRIM(RTRIM(REPLACE(value, A.Name, ''''))),1, CHARINDEX('' '',LTRIM(RTRIM(REPLACE(value, A.Name,'''')))) -1) as [Status]) B
+			CROSS APPLY (SELECT LTRIM(RTRIM(REPLACE(REPLACE(value, B.[Status], ''''),A.Name,''''))) as ServiceName) C 
+		where value is not null and rowId >3
+		)
+
+		INSERT @SQLTable
+		SELECT * FROM _CTE WHERE [STATUS] <>''RUNNING'' AND ( NAME LIKE ''SQLAGENT%'' OR NAME LIKE ''MSSQL%'' )
+
+		IF @@ROWCOUNT > 0
 		begin
 		
 			EXEC [Configuration].[usp_AlertEmail_Get] @receipants OUTPUT; -- get email
 		
-			SET @xml = CAST(( SELECT JobName AS ''td'','''', 
-									 StepName AS ''td'','''', 
-									 SqlMessageId AS ''td'','''', 
-									 SqlSeverity AS ''td'','''', 
-									 [message] AS ''td'','''', 
-									 ExecutionDatetime AS ''td'','''', 
-									 RunDuration  AS ''td''
-			FROM  @SQLTable ORDER BY Instanceid 
+			SET @xml = CAST(( SELECT Status AS ''td'','''', 
+									 Service AS ''td'','''', 
+									 DisplayName  AS ''td''
+			FROM  @SQLTable 
+			ORDER BY Service 
 			FOR XML PATH(''tr''), ELEMENTS ) AS NVARCHAR(MAX));
 
 
-			SET @body =''<html>Please see below for failed SQL Jobs executed on: '' + cast( @DTNow as varchar )+ ''</br></br>
+			SET @body =''<html>Please see below for SQL services that are not running executed on: '' + cast( @DTNow as varchar )+ ''</br></br>
 						<table border = 1> 
 						<tr valign=top>
-						<th> Job Name </th> 
-						<th> Step Name </th>
-						<th> SQL Message Id </th>
-						<th> SQL Severity </th>
-						<th> Message </th>
-						<th> Execution Datetime </th>
-						<th> Run Duration </th>
+						<th> Status </th> 
+						<th> Service </th>
+						<th> DisplayName </th>
 						</tr>'';    
 
 			SET @body = @body + REPLACE(@xml,''<tr>'',''<tr valign=top>'') +''</table></body></html>'';
 			EXEC [Configuration].[usp_EmailNotification] ''Database'',@Subject, @body, @receipants;
 
-			-- finally insert into Reports.t_FailedSQLJobsHistory
-			INSERT INTO Reports.t_FailedSQLJobsHistory
-			SELECT * FROM @SQLTable
 		end
 
 END TRY
@@ -115,4 +121,3 @@ BEGIN CATCH
 		RAISERROR (@ErrorMessage,16,1) WITH LOG;
 END CATCH;
 GO
-

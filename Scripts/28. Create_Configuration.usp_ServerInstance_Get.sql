@@ -21,7 +21,7 @@ BEGIN TRY
 	-- 2. Create table	
 			SET @SQL = '
 -- =============================================
--- Create date: 10/31/2014
+-- Create date: ''' + cast(@ReleaseDate as varchar) + '''
 -- Description:	Select from Server Instance table
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
