@@ -25,16 +25,15 @@ BEGIN TRY
 -- Description:	Delete backup files   
 -- =============================================
 CREATE PROCEDURE ' + @ObjectName + '
-	( @CustomRemoval INT = NULL )
+	( @CustomRemoval INT = 4 )
 AS
 BEGIN
 	SET NOCOUNT ON; 
 
-	DECLARE @DeletionPeriod				INT = ( SELECT ISNULL(@CustomRemoval, ( SELECT Period FROM [Configuration].[t_BackupManagement] (nolock) WHERE ProcessType = ''Deletion'' )));
-	DECLARE @DateToRemove				DateTime =  DATEADD(DAY, DATEDIFF(DAY, 0 , GETDATE()) - @DeletionPeriod,0 ); -- actual date
+	DECLARE @DateToRemove				DateTime =  DATEADD(DAY, DATEDIFF(DAY, 0 , GETDATE()) - @CustomRemoval,0 ); -- actual date
 	DECLARE @Backupfolderlocation		VARCHAR(100) = [Configuration].[svfn_DefaultFolderLocation_Get](''BackupDirectory''); -- backupfolder local
 	DECLARE @SQL						NVARCHAR(4000) = CASE 
-															WHEN @DeletionPeriod > 0 THEN ''FORFILES /p '' + @Backupfolderlocation + '' /s /m *.* /d -'' + cast(@DeletionPeriod as varchar(5)) + '' /c "CMD /C del /Q /F @FILE"''
+															WHEN @CustomRemoval > 0 THEN ''FORFILES /p '' + @Backupfolderlocation + '' /s /m *.* /d -'' + cast(@CustomRemoval as varchar(5)) + '' /c "CMD /C del /Q /F @FILE"''
 															ELSE ''FORFILES /p '' + @Backupfolderlocation + '' /s /m *.* /d -0 /c "CMD /C del /Q /F @FILE"''
 														  END;
 	EXEC xp_cmdshell @SQL;
